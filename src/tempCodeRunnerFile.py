@@ -1,0 +1,1 @@
+https://booktoki468.com/bbs/captcha.php?bo_table=novel&wr_id=17921534&book=%EC%9D%BC%EB%B0%98%EC%86%8C%EC%84%A4
