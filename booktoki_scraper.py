@@ -100,7 +100,7 @@ def main() -> None:
   
   # Comment to allow appending to already created files
   append = 0
-  while os.path.exists(output_file + ".txt"):
+  while os.path.exists("output/" + output_file + ".txt"):
     output_file += str(append)
     append += 1
   
@@ -114,7 +114,7 @@ def main() -> None:
     split_text = splitString(korean_text)
     english_text = asyncio.run(translateChunks(split_text))
     english_text = english_text.replace('\n', '\n\n')
-    with open(output_file + ".txt", "a", encoding="utf-8") as file:
+    with open("output/" + output_file + ".txt", "a", encoding="utf-8") as file:
       file.write("\n\n" + SEPERATOR + " Chapter " + str(chapter_num) + " " + SEPERATOR + "\n\n")
       file.write(english_text)
       
