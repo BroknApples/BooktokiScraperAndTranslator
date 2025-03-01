@@ -9,11 +9,10 @@ Note: I have not figured out a way to bypass the Booktoki CAPTCHA, Cloudfare was
 TODO: insert screenshots
 
 ## How to use
-1. Run command in terminal:
+1. Run command in terminal OR double click booktoki_scraper.py file:
 ```console
 python booktoki_scraper.py
 ```
-1. OR double click booktoki_scraper.py file
 2. Paste a booktoki link
 3. Enter a starting chapter (Default is 0)
 4. Enter an ending chapter (Default is latest release)
@@ -22,6 +21,6 @@ python booktoki_scraper.py
 7. Check the 'output/' directory for your novel
 
 ## Dependencies
-Must have a Webdriver installed, such as chromedriver.exe
-SeleniumBase and it's dependencies
-Googletrans and it's dependencies
+* Must have a Webdriver installed, such as chromedriver.exe
+* SeleniumBase and it's dependencies
+* Googletrans and it's dependencies
