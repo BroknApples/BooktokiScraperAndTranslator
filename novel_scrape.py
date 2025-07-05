@@ -1,4 +1,5 @@
 # Imports
+import asyncio
 from src.utils import (
   ensureModuleInstalled
 )
@@ -8,9 +9,8 @@ ensureModuleInstalled("selenium")
 ensureModuleInstalled("seleniumbase")
 ensureModuleInstalled("googletrans", "googletrans==4.0.0-rc1")
 
-import asyncio
-from scraper import Scraper
-from translator import TextTranslator
+from src.scraper import Scraper
+from src.translator import TextTranslator
 
 
 

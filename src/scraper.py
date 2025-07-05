@@ -5,7 +5,7 @@ import asyncio
 from enum import Enum
 from seleniumbase import Driver
 from selenium.webdriver.common.by import By
-from utils import (
+from src.utils import (
   INT_MAX,
   printModuleSeparator,
   getFileContentsByLine
@@ -183,7 +183,7 @@ class Scraper():
 
     path: str = "booktoki.txt"
 
-    self.loadScraperSettings(path, True)
+    self.loadScraperSettings(path)
 
   # === Function: __init__ ===
   def __init__(self, novel_url: str = "") -> None:
@@ -216,6 +216,8 @@ class Scraper():
     else:
       # If false(default value), then the filename is just the name of the file that is in the expected location
       full_file_path += self._SCRAPER_SETTINGS_DIRECTORY_PATH + "/" + filename
+
+    print(f'Loading from file path: "{full_file_path}"')
 
     # Get the line data of the file
     lines: list[str] = getFileContentsByLine(full_file_path)
