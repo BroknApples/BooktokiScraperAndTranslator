@@ -3,7 +3,7 @@ Booktoki
 
 [ChapterListReadChapterButtonHtmlData]
 tag="By.XPATH"
-element="null"
+element="//*[@data-index="{_VALUE_}"]"
 
 [NextChapterButtonHtmlData]
 tag="class name"

@@ -12,17 +12,6 @@ from src.utils import (
 )
 
 
-class HtmlElementTag():
-  """
-  Holds constants for an html element's type
-  """
-
-  ID: str = "id"
-  CLASS_NAME: str = "class name"
-  X_PATH = By.XPATH
-  X_PATH_STR: str = "By.XPATH" # Needed for string-matching to choose the correct tag type
-
-
 class Scraper():
   """
   A class that allows you to scrape chapter data from a booktoki novel page
@@ -36,6 +25,45 @@ class Scraper():
     
     tag = None # Type of element tag to search this element with | NOTE: Use HtmlElementTag.XXX
     element: str = None # Actual element to find
+
+    class Tags():
+      """
+      Holds constants for an html element's type
+      """
+
+      ID: str = "id"
+      CLASS_NAME: str = "class name"
+      X_PATH = By.XPATH
+      X_PATH_STR: str = "By.XPATH" # Needed for string-matching to choose the correct tag type
+
+    class Elements():
+      """
+      Holds constants/functions for generating HtmlElementData element names
+      """
+
+      FILL_VALUE: str = "_VALUE_"
+
+      def fillElementWithValue(element: str, value: str) -> str:
+        """
+        Fill a slot in an element that has the string "_VALUE_" somewhere in it, which represents
+        that a place should be replaced with a value at some point
+
+        Params:
+          element: String to modify
+          value: Value to insert at some position
+
+        Returns:
+          str: Modified string with the value inserted in the place of the FILL_VALUE constnat
+        """
+
+        # If the fill value constant is in the string, then we should replace something
+        if (FILL_VALUE in element):
+          new_element: str = element.replace(FILL_VALUE, value)
+          return new_element
+        
+        # The fill value constant wasn't present, so we just return the original value
+        return element
+  
 
   # ******************************************** #
   # ****************** Private ***************** #
@@ -87,7 +115,7 @@ class Scraper():
     self._driver.uc_gui_click_captcha()
     
     # NOTE: make this a changeable parameter (this can be the default tho)
-    chapter_element = self._driver.find_element(By.XPATH, f'//*[@data-index="{chapter_num}"]') # Finds the chapter on the novel description page
+    chapter_element = self._driver.find_element(By.XPATH, ) # Finds the chapter on the novel description page
     
     html_content = chapter_element.get_attribute("innerHTML")
     match = re.search(r'href="(.*?)"', html_content)
@@ -97,7 +125,7 @@ class Scraper():
   # === Function: _findNextChapterUrl ===
   def _findNextChapterUrl(self) -> str:
     # NOTE: make this a changeable parameter (this can be the default tho)
-    next_chapter_link = self._driver.find_element("class name", "btn-resource.btn-next.at-tip") # Gets the link attached to the next chapter button
+    next_chapter_link = self._driver.find_element("class name", ) # Gets the link attached to the next chapter button
     
     html_content = next_chapter_link.get_attribute("innerHTML")
     match = re.search(r'href="(.*?)"', html_content)
@@ -108,9 +136,9 @@ class Scraper():
 
   # === Function: _scrapeChapterUrl ===
   def _scrapeChapterUrl(self, url: str, target_id: str, chapter_num: int) -> any:
-    print(f"Scraping Chapter {chapter_num} URL...")
+    print(f"Scraping Chapter {chapter_num}...")
     
-    self._driver.uc_open_with_reconnect(url, reconnect_time=6)
+    self._driver.uc_open_with_reconnect(url, reconnect_time=self._RECONNECT_TIME)
     self._driver.uc_gui_click_captcha()
     
     try:
