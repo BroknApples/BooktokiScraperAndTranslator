@@ -11,4 +11,4 @@ element="btn-resource.btn-next.at-tip"
 
 [ChapterTextBodyHtmlData]
 tag="id"
-element="null"
+element="novel_content"
