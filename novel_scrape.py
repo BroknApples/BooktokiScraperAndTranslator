@@ -92,7 +92,7 @@ async def main() -> None:
       CHAPTER_DATA_SIZE: int = len(chapter_data)
 
       # Log text formatting
-      print("Formatting text...\n")
+      print("Formatting text...")
 
       # Fix chapter data if necessary
       for i in range(CHAPTER_DATA_SIZE):
