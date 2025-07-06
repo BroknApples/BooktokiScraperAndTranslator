@@ -5,8 +5,11 @@ import sys
 import os
 
 
-""" Used to check if the program has already been set up """
-SETUP_FILENAME: str = ".setup"
+""" Name of this script file """
+SETUP_SCRIPT_FILENAME: str = "setup.py"
+
+""" NOTE: Change this to 'False' if you want to run the setup script again"""
+already_setup: bool = False
 
 # === Function: setup ===
 def setup():
@@ -15,7 +18,7 @@ def setup():
   """
 
   # Check if the program is already set up
-  if (os.path.exists(SETUP_FILENAME)):
+  if (already_setup):
     print("Project already set up. Exiting setup script.")
 
   # Header
@@ -46,9 +49,7 @@ def setup():
   # Log module installing
   print("Module installation complete!")
 
-  # Create setup file to note the project is already
-  # set-up, just in case the script is ran again afterwards
-  open(SETUP_FILENAME, "w").close()
+  setAsAlreadySetup()
 
   # Footer
   print("\n*************************************************")
@@ -113,6 +114,18 @@ def installModule(module_name: str) -> None:
   except subprocess.CalledProcessError:
     print(f"Failed to install '{module_name}'. Please install it manually.")
     sys.exit(1)
+
+def setAsAlreadySetup() -> None:
+  # Modify the 'already_setup' variable to mark it as already ran
+  with open(SETUP_SCRIPT_FILENAME, "r") as f:
+    lines = f.readlines()
+
+  with open(SETUP_SCRIPT_FILENAME, "w") as f:
+    for line in lines:
+      if (line == "already_setup: bool = False"):
+        f.write("already_setup: bool = True")
+      else:
+        f.write(line)
 
 
 # Start program
