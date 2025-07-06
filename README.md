@@ -26,6 +26,7 @@ python novel_scrape.py
 * Selenium and it's dependencies
 * SeleniumBase and it's dependencies
 * Googletrans and it's dependencies
+* PyAutoGUI (Automatically installed by selenium)
 
 ## Notes
 # TODO: Fill in later

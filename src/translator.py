@@ -1,6 +1,7 @@
 # Imports
 import asyncio
 from googletrans import Translator
+from src.utils import printModuleSeparator
 
 
 class TextTranslator():
@@ -109,6 +110,12 @@ class TextTranslator():
       str: Translated text
     """
 
+    # Print module seperator
+    printModuleSeparator()
+
+    # Log the translation's start
+    print("Starting Translation...\n")
+
     # If the default params are used, apply private variables in their place
     if (src_lang == None):
       # NOTE: If src lang is default, then dest lang is automatically default
@@ -134,7 +141,13 @@ class TextTranslator():
     translated_chunks: list[str] = []
     for text_chunk in chunkated_text:
       translated_text = self._translateInternal(text_chunk, src_lang, dest_lang)
-      translated_chunks.append(translated_text)
+      translated_chunks += translated_text
+
+    # Log the translation's completion
+    print("\nTranslation Complete!")
+
+    # Print module seperator
+    printModuleSeparator()
 
     # Return a single string instead of the chunks
     return "".join(translated_chunks)  
@@ -153,6 +166,12 @@ class TextTranslator():
       list[str]: Translated text array
     """
 
+    # Print module seperator
+    printModuleSeparator()
+
+    # Log the translation's start
+    print("Starting Translation...\n")
+
     # If the default params are used, apply private variables in their place
     if (src_lang == None):
       # NOTE: If src lang is default, then dest lang is automatically default
@@ -163,12 +182,18 @@ class TextTranslator():
     elif (dest_lang == None):
       dest_lang = self.getDestinationLanguage()
     
+    # Length of the array    
+    ARRAY_LENGTH: int = len(text_array)
+
     # The final translated version of the array
     translated_array: list[str] = []
 
+    # Fill array with empty slots
+    for i in range(ARRAY_LENGTH):
+      translated_array.append("")
+
     # Translate each index of the array
-    ARRAY_LENGTH: int = len(text_array)
-    for i in range(0, ARRAY_LENGTH):
+    for i in range(ARRAY_LENGTH):
       # Print log message
       print(f"Translating array[{i}]...")
 
@@ -187,10 +212,16 @@ class TextTranslator():
       translated_chunks: str = ""
       for text_chunk in chunkated_text:
         translated_text = self._translateInternal(text_chunk, src_lang, dest_lang)
-        translated_chunks.append(translated_text)
-
+        translated_chunks += translated_text
+      
       # Create a single string instead of chunks
       translated_array[i] = "".join(translated_chunks)
+
+    # Log the translation's completion
+    print("\nTranslation Complete!")
+
+    # Print module seperator
+    printModuleSeparator()
 
     # Return the translated array
     return translated_array

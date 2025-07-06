@@ -1,5 +1,6 @@
 # Imports
 import asyncio
+import os
 from src.utils import (
   ensureModuleInstalled
 )
@@ -11,7 +12,6 @@ ensureModuleInstalled("googletrans", "googletrans==4.0.0-rc1")
 
 from src.scraper import Scraper
 from src.translator import TextTranslator
-
 
 # TODO: Try deep-translator for translation when done
 
@@ -34,8 +34,8 @@ async def main() -> None:
   scraper: Scraper = Scraper()
   translator: TextTranslator = TextTranslator()
 
-  # TESTING THE SCRAPER SETTINGS LOADER:
-  scraper.testLoad()
+  # NOTE: TEST TRANSLATION NOVEL (Academy's Undercover Professor) lol
+  # https://booktoki468.com/novel/6219?book=일반소설
 
   # NOTE: Example:
   # untranslated_text: str = "아카데미 에위장취업당했다-277화"
@@ -76,7 +76,7 @@ async def main() -> None:
     
     # TODO: Do actual work here
     start = input("Start scrape? (y/n): ")
-    if (start == y):
+    if (start == "y"):
       # Scrape the novel
 
       # Initialize values in the scraper
@@ -89,21 +89,28 @@ async def main() -> None:
 
       # Start the scrape
       chapter_data: list[str] = scraper.scrape(start_idx=start_idx, end_idx=end_idx)
+      CHAPTER_DATA_SIZE: int = len(chapter_data)
 
-      # Replace weird ellipses characters with actual periods
+      # Fix chapter data if necessary
+      for i in range(CHAPTER_DATA_SIZE):
+        # Prevent erros
+        if (chapter_data[i] == None): continue
+
+        # Replace weird ellipses characters with actual periods
+        chapter_data[i] = chapter_data[i].replace('…', '...')
 
       # Translate the data
       translation_data: list[str] = translator.translateStringArray(chapter_data)
       
       # Create the directory to save to
-      os.makedirs(output_directory)
+      os.makedirs(output_directory, exist_ok=True)
 
       # Save the translated data to the disk
       CHAPTER_NAME: str = "Chapter " # NOTE: Appends the number to the end when using
       array_index: int = 0 # Used to actually index the array
-      for i in range(start_idx, end_idx):
+      for i in range(start_idx, end_idx + 1):
         # Create chapter name
-        curr_chapter_name: str = CHAPTER_NAME + i + ".txt"
+        curr_chapter_name: str = CHAPTER_NAME + str(i) + ".txt"
 
         # Write to file
         with open(output_directory + "/" + curr_chapter_name, "w", encoding="utf-8") as f:
@@ -115,7 +122,7 @@ async def main() -> None:
     continue_choice = input("Continue? (y/n): ")
 
     if (continue_choice != "y"):
-      running = false
+      running = False
 
 
 # Run the main script

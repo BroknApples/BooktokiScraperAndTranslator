@@ -41,8 +41,9 @@ class Scraper():
       Holds constants/functions for generating HtmlElementData element names
       """
 
-      FILL_VALUE: str = "_VALUE_"
+      FILL_VALUE: str = "{_VALUE_}"
 
+      @staticmethod
       def fillElementWithValue(element: str, value: str) -> str:
         """
         Fill a slot in an element that has the string "_VALUE_" somewhere in it, which represents
@@ -57,8 +58,8 @@ class Scraper():
         """
 
         # If the fill value constant is in the string, then we should replace something
-        if (FILL_VALUE in element):
-          new_element: str = element.replace(FILL_VALUE, value)
+        if (Scraper.HtmlElementData.Elements.FILL_VALUE in element):
+          new_element: str = element.replace(Scraper.HtmlElementData.Elements.FILL_VALUE, str(value))
           return new_element
         
         # The fill value constant wasn't present, so we just return the original value
@@ -96,8 +97,8 @@ class Scraper():
   """ The HTML data for the actual text of a chapter """
   _chapter_text_body_htmldata: HtmlElementData = HtmlElementData()
 
-  # === Function: getHrefFromHtmlElement ===
-  def getHrefFromHtmlElement(self, element) -> str | None:
+  # === Function: _getHrefFromHtmlElement ===
+  def _getHrefFromHtmlElement(self, element) -> str | None:
     """
     Get the href element embedded within an html element
 
@@ -140,15 +141,15 @@ class Scraper():
     
     # If the data params includes a FILL_VALUE,
     # fill that value with the starting chapter
-    if (HtmlElementData.Elements.FILL_VALUE in data_params.element):
-      data_params.element = HtmlElementData.Elements.fillElementWithValue(chapter_num)
+    if (self.HtmlElementData.Elements.FILL_VALUE in data_params.element):
+      data_params.element = Scraper.HtmlElementData.Elements.fillElementWithValue(data_params.element, chapter_num)
 
     try:
       # Get the target element on the chapter list page
       target_element = self._driver.find_element(data_params.tag, data_params.element) 
 
       # Return the link OR 'None' if it doesn't exist
-      return getHrefFromHtmlElement(target_element)
+      return self._getHrefFromHtmlElement(target_element)
 
     except Exception as e:
       # If there is no such element, print the error and return 'None'
@@ -172,7 +173,7 @@ class Scraper():
       target_element = self._driver.find_element(data_params.tag, data_params.element)
 
       # Return the link OR 'None' if it doesn't exist
-      return getHrefFromHtmlElement(target_element)
+      return self._getHrefFromHtmlElement(target_element)
 
     except Exception as e:
       # If there is no such element, print the error and return 'None'
@@ -242,8 +243,8 @@ class Scraper():
           print("tag -> " + value)
 
           # Some tags have a special value that is represented by a string
-          if (value == HtmlElementTag.X_PATH_STR):
-            value = HtmlElementTag.X_PATH
+          if (value == self.HtmlElementData.Tags.X_PATH_STR):
+            value = self.HtmlElementData.Tags.X_PATH
 
           html_element_data.tag = value
       
@@ -393,24 +394,27 @@ class Scraper():
     Returns:
       list[str]: List of the untranslated novel chapters (list[0] = untranslated starting chapter, ..., list[n] = untranslated ending chapter)
     """
-
+    
     # Setup driver
     self.initializeWebDriver()
 
     # Check if the proper varables have been instantiated
-    if (self.getNovelUrl() == ""):
+    if (self.getNovelChapterListUrl() == ""):
       return []
 
     # Enforce index constraints
     if (end_idx < start_idx):
       end_idx = start_idx
 
+    # Print module seperator
+    printModuleSeparator()
+
     # Log starting message
     print(
-      "Starting scrape with parameters: \n"
-      "\tNovel Url: " + self.getNovelUrl() + "\n"
-      "\tStarting Chapter Number: " + "\n"
-      "\tEnding Chapter Number: " + str(end_idx)
+      "Starting Scrape With Parameters: \n"
+      "\tNovel Url: " + self.getNovelChapterListUrl() + "\n"
+      "\tStarting Chapter Number: " + str(start_idx) + "\n"
+      "\tEnding Chapter Number: " + str(end_idx) + "\n"
     )
 
     # Create empty container for each chapter's text data
@@ -420,12 +424,12 @@ class Scraper():
     curr_url: str = self._getInitialChapterUrl(start_idx)
 
     # Scrape each chapter in the specified range
-    for chapter_num in range (int(start_idx), int(end_idx)):
+    for chapter_num in range (int(start_idx), int(end_idx) + 1):
       # If the chapter url doesn't exist, leave loop to prevent errors
       if (curr_url == "None"): break
 
       # Log chapter scraping progess
-      print(f"Scraping chapter #{chapter_num}.")
+      print(f"Scraping chapter #{chapter_num}...")
 
 
       # TODO: Implement a check that if a page is left going afk for long enough,
@@ -441,6 +445,12 @@ class Scraper():
 
     # Close driver
     self.uninitializeWebDriver()
+
+    # Log the scrape's completion
+    print("\nScraping Complete!")
+
+    # Print module seperator
+    printModuleSeparator()
 
     # Return the chapter data
     return chapter_text
