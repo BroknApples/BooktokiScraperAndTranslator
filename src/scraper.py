@@ -413,8 +413,8 @@ class Scraper():
     print(
       "Starting Scrape With Parameters: \n"
       "\tNovel Url: " + self.getNovelChapterListUrl() + "\n"
-      "\tStarting Chapter Number: " + str(start_idx) + "\n"
-      "\tEnding Chapter Number: " + str(end_idx) + "\n"
+      "\tStarting Chapter: " + str(start_idx) + "\n"
+      "\tEnding Chapter: " + str(end_idx) + "\n"
     )
 
     # Create empty container for each chapter's text data
@@ -472,6 +472,7 @@ class Scraper():
     """
     Reset the driver object to null to reset/close the browser session
     """
+    self._driver.close()
     self._driver = None
 
   # === Function: setNovelChapterListUrl ===

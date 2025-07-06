@@ -91,6 +91,9 @@ async def main() -> None:
       chapter_data: list[str] = scraper.scrape(start_idx=start_idx, end_idx=end_idx)
       CHAPTER_DATA_SIZE: int = len(chapter_data)
 
+      # Log text formatting
+      print("Formatting text...\n")
+
       # Fix chapter data if necessary
       for i in range(CHAPTER_DATA_SIZE):
         # Prevent erros
@@ -99,11 +102,17 @@ async def main() -> None:
         # Replace weird ellipses characters with actual periods
         chapter_data[i] = chapter_data[i].replace('…', '...')
 
+        # Replace one newline with 2, for visual seperation
+        chapter_data[i] = chapter_data[i].replace("\n", "\n\n")
+
+      # Log text formatting complete
+      print("Text formatting complete!\n")
+
       # Translate the data
       translation_data: list[str] = translator.translateStringArray(chapter_data)
       
       # Create the directory to save to
-      os.makedirs(output_directory, exist_ok=True)
+      os.makedirs(output_directory, exist_ok=False)
 
       # Save the translated data to the disk
       CHAPTER_NAME: str = "Chapter " # NOTE: Appends the number to the end when using
