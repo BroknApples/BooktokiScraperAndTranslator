@@ -378,7 +378,7 @@ class Scraper():
     # TODO: Implment -> Save the current element data in the file
 
   # === Function: scrape ===
-  def scrape(self, start_idx: int = 0, end_idx: int = INT_MAX) -> list:
+  def scrape(self, start_idx: int = 0, end_idx: int = INT_MAX) -> list[str]:
     """
     Starts the scraping of a booktoki novel.
 
@@ -391,7 +391,7 @@ class Scraper():
       end_idx: Chapter to end the scrape at.    NOTE: Constraints: (end_idx >= start_idx)
 
     Returns:
-      list: List of the untranslated novel chapters (list[0] = untranslated starting chapter, ..., list[n] = untranslated ending chapter)
+      list[str]: List of the untranslated novel chapters (list[0] = untranslated starting chapter, ..., list[n] = untranslated ending chapter)
     """
 
     # Setup driver
@@ -407,23 +407,43 @@ class Scraper():
 
     # Log starting message
     print(
-      "Starting scrape with params: \n"
+      "Starting scrape with parameters: \n"
       "\tNovel Url: " + self.getNovelUrl() + "\n"
       "\tStarting Chapter Number: " + "\n"
       "\tEnding Chapter Number: " + str(end_idx)
     )
 
-    # Get the url for the first chapter
-    first_chapter_url: str = _getInitialChapterUrl(start_idx)
-
     # Create empty container for each chapter's text data
     chapter_text: list[str] = []
+    
+    # Get the url for the first chapter
+    curr_url: str = self._getInitialChapterUrl(start_idx)
 
-    # Do the scraping for each chapter
-    # TODO: Loop and scrape chapter data here
+    # Scrape each chapter in the specified range
+    for chapter_num in range (int(start_idx), int(end_idx)):
+      # If the chapter url doesn't exist, leave loop to prevent errors
+      if (curr_url == "None"): break
+
+      # Log chapter scraping progess
+      print(f"Scraping chapter #{chapter_num}.")
+
+
+      # TODO: Implement a check that if a page is left going afk for long enough,
+      #       it will attepmt to redo the scrape from this chapter index
+
+
+      # Get the text for this chapter
+      curr_chapter_text: str = self._scrapeChapter(curr_url)
+      chapter_text.append(curr_chapter_text)
+      
+      # Get the next chapter's URL
+      curr_url = self._findNextChapterUrl()
 
     # Close driver
     self.uninitializeWebDriver()
+
+    # Return the chapter data
+    return chapter_text
   
 
   # ******************************************** #

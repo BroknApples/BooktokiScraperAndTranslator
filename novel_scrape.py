@@ -40,8 +40,7 @@ async def main() -> None:
   # print("The translated text is: " + translated_text)
 
   while (running):
-    # TESTING -> Temporary print choices instead of ui variables
-    pass
+    url = input("Input the chapter URL: ")
 
 
 # Run the main script
