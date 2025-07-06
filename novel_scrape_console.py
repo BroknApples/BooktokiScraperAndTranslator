@@ -126,7 +126,7 @@ async def main() -> None:
         # Increment array index
         array_index += 1
     
-    continue_choice = input("Continue? (y/n): ")
+    continue_choice = input("Translate another novel? (y/n): ")
 
     if (continue_choice != "y"):
       running = False
