@@ -3,6 +3,11 @@ import asyncio
 from deep_translator import GoogleTranslator
 from src.utils import printModuleSeparator
 
+# NOTE: TEST TRANSLATION TEXT:
+# translator = TextTranslator()
+# untranslated_text: str = "아카데미 에위장취업당했다-277화"
+# translated_text: str = translator.translateString(untranslated_text)
+# print("The translated text is: " + translated_text)
 
 class TextTranslator():
   """

@@ -137,7 +137,7 @@ class Scraper():
     self._driver.uc_gui_click_captcha()
     
     # Get the params to be used in 'find_element'
-    data_params: HtmlElementData = self.getChapterListReadChapterButtonHtmlData()
+    data_params: Scraper.HtmlElementData = self.getChapterListReadChapterButtonHtmlData()
     
     # If the data params includes a FILL_VALUE,
     # fill that value with the starting chapter
@@ -166,7 +166,7 @@ class Scraper():
     """
 
     # Get the params to be used in 'find_element'
-    data_params: HtmlElementData = self.getNextChapterButtonHtmlData()
+    data_params: Scraper.HtmlElementData = self.getNextChapterButtonHtmlData()
 
     try:
       # Get the target element
@@ -196,7 +196,7 @@ class Scraper():
     self._driver.uc_gui_click_captcha()
     
     # Get the params to be used in 'find_element'
-    data_params: HtmlElementData = self.getChapterTextBodyHtmlData()
+    data_params: Scraper.HtmlElementData = self.getChapterTextBodyHtmlData()
 
     try:
       # Get the target element
@@ -374,7 +374,7 @@ class Scraper():
       filename: Name of the file that contains the scraper settings. This will be located in the 'self._SCRAPER_SETTINGS_FOLDER' directory
     """
 
-    full_file_path: str = _SCRAPER_SETTINGS_DIRECTORY_PATH + "/" + filename
+    full_file_path: str = self._SCRAPER_SETTINGS_DIRECTORY_PATH + "/" + filename
 
     # TODO: Implment -> Save the current element data in the file
 

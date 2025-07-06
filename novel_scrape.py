@@ -5,7 +5,8 @@ from src.scraper import Scraper
 from src.translator import TextTranslator
 from src.ui import setupGui
 
-# TODO: Try deep-translator for translation when done
+# NOTE: TEST TRANSLATION NOVEL (Academy's Undercover Professor) lol
+# https://booktoki468.com/novel/6219?book=일반소설
 
 # === Function: main ===
 async def main() -> None:
@@ -26,14 +27,6 @@ async def main() -> None:
   scraper: Scraper = Scraper()
   translator: TextTranslator = TextTranslator()
   setupGui()
-
-  # NOTE: TEST TRANSLATION NOVEL (Academy's Undercover Professor) lol
-  # https://booktoki468.com/novel/6219?book=일반소설
-
-  # NOTE: Example:
-  # untranslated_text: str = "아카데미 에위장취업당했다-277화"
-  # translated_text: str = translator.translateString(untranslated_text)
-  # print("The translated text is: " + translated_text)
 
   # TODO: Review this entire while loop and change to a ui-based version
   #       better yet, just put this entire while loop inside the ui.py file
