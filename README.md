@@ -26,7 +26,7 @@ Just simply find the link to the novel's chapter list page and check the preset 
 ### TODO: FINISH LATER
 
 #### Installing packages
-* Run 'setup.py' which checks and installs the required packages to run this program OR run:
+* Run 'setup.py' which checks and installs the required packages to run this program OR run these terminal commands:
 ```console
 pip install PySide6
 pip install selenium
@@ -37,11 +37,10 @@ pip install deep-translator
 
 ## How to use
 ### Option One -- Run Using File Explorer
-1. Double click 'novel_scrape.py', 'novel_scrape_console.py',
-### TODO: Explain how to use the gui application
+* Double click 'novel_scrape.py', 'novel_scrape_console.py',
 
-### Option One -- Run Using Command Prompt
-1. Run ONE of two commands:
+### Option Two -- Run Using Command Prompt
+* Run ONE of two commands in your terminal:
 ```console
 python novel_scrape.py
 ```
@@ -49,10 +48,15 @@ OR
 ```console
 python novel_scrape_console.py
 ```
-2. Paste a booktoki link
-3. Enter a starting chapter (Default is 1)
-4. Enter an ending chapter (Default is latest release)
-5. Enter your translation directory
+
+### Using the Terminal/Console Edition
+1. Paste a booktoki link
+2. Enter a starting chapter (Default is 1)
+3. Enter an ending chapter (Default is latest release)
+4. Enter your translation directory
 5. Enter 'y' to start OR 'n' to close
 6. Wait until the script completes AND watch out for any Booktoki CAPTCHAs
 7. Check the 'translations/' directory for your novel
+
+### Using the GUI Edition
+### TODO: Explain how to use the gui application
