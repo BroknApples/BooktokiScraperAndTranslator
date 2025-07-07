@@ -27,6 +27,13 @@ async def main() -> None:
   translator: TextTranslator = TextTranslator()
 
   while running:
+    scraper_settings_filename: str = "Uninitialized"
+    while ".txt" not in scraper_settings_filename and scraper_settings_filename != "":
+      scraper_settings_filename = ""
+      scraper_settings_filename = input("Enter the scraper settings filename (Press Enter for 'Booktoki'): ")
+    if (scraper_settings_filename == ""):
+      scraper_settings_filename = "booktoki.txt"
+
     # Get the novel URL
     novel_url: str = input("Enter the novel URL: ")
 
@@ -53,11 +60,14 @@ async def main() -> None:
     while (output_directory == ""):
       output_directory = input("Enter a name for your output directory: ")
     output_directory = OUTPUT_DIRECTORY_ROOT + output_directory
-    
-    # TODO: Do actual work here
+
     start = input("Start scrape? (y/n): ")
     if (start == "y"):
       # Scrape the novel
+
+      # Set the scraper settings
+      if (scraper_settings_filename != ""):
+        scraper.loadScraperSettings(scraper_settings_filename)
 
       # Initialize values in the scraper
       scraper.setNovelChapterListUrl(novel_url)

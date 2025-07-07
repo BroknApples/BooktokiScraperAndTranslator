@@ -22,7 +22,7 @@ def setup():
     print("Project already set up. Exiting setup script.")
 
   # Header
-  print("**************** NovelScrape Setup ****************")
+  print("\n**************** NovelScrape Setup ****************")
   print("********      Created by 'BroknApples'       ******")
   print("********   NovelScrape version: 2.0.0 Setup  ******")
   print("***************************************************\n")
@@ -30,7 +30,7 @@ def setup():
   # Ensure the user is ready to setup the project
   response: str = ""
   while (response != 'OK'):
-    response = input("STOP. Before proceeding, ensure you have Python 3.12.8 using MSYS2 (Or another valid version) set up. Enter 'OK' to continue: ")
+    response = input("STOP! Before proceeding, ensure you are ready to set up the project. Enter 'OK' to continue: ")
   
   # Ensure the user is really, really, really ready to setup the project
   are_you_sure: str = ""
