@@ -1,11 +1,85 @@
 # Imports
 import asyncio
 import os
+import threading
 from src.scraper import Scraper
 from src.translator import TextTranslator
+from src.utils import (
+  INT_MAX,
+  createDirectory,
+  splitRangeIntoChunks
+)
  
 # NOTE: TEST TRANSLATION NOVEL (Academy's Undercover Professor) lol
 # https://booktoki468.com/novel/6219?book=일반소설
+# === Constants ===
+OUTPUT_DIRECTORY_ROOT: str = "translations/" # Directory that novels will be outputted to
+
+# === Function: executeScrapeAndTranslate ===
+def executeScrapeAndTranslate(novel_url: str, scraper_settings_filename: str, start_idx: int, end_idx: int, output_directory: str) -> list[str]:
+  """
+  Does the actual work for scraping and translating a novel
+
+  Params:
+    start_idx: Chapter to start on
+    end_idx: Chapter to end on
+
+
+  Returns:
+    list[str]: The translated chapter data
+  """
+
+  # Create scraper and translator object
+  scraper: Scraper = Scraper()
+  translator: TextTranslator = TextTranslator()
+
+  # Set the scraper settings
+  if (scraper_settings_filename != ""):
+    scraper.loadScraperSettings(scraper_settings_filename)
+
+  # Initialize values in the scraper
+  scraper.setNovelChapterListUrl(novel_url)
+
+  # Initialize values in the translator
+  # TODO: MAKE THESE ACTUALLY CHANGEABLE
+  translator.setSourceLanguage(TextTranslator.Languages.KOREAN)
+  translator.setDestinationLanguage(TextTranslator.Languages.ENGLISH)
+
+  # Start the scrape
+  chapter_data: list[str] = scraper.scrape(start_idx=start_idx, end_idx=end_idx, format_text=True)
+  CHAPTER_DATA_SIZE: int = len(chapter_data)
+
+  # Translate the data
+  translation_data: list[str] = translator.translateStringArray(chapter_data)
+
+  # Error during translation
+  if (translation_data == None):
+    print("Could not translate the data. Please use a valid translation language.")
+    sys.exit(1)
+
+  # Create the directory to save to
+  while not createDirectory(output_directory, False):
+    print("Invalid output directory name.")
+
+    output_directory = ""
+    while (output_directory == ""):
+      output_directory = input("Enter a name for your output directory: ")
+    output_directory = OUTPUT_DIRECTORY_ROOT + output_directory
+
+  # Save the translated data to the disk
+  NOVEL_DATA_ARRAY_SIZE: int = len(translation_data)
+  CHAPTER_NAME: str = "Chapter " # NOTE: Appends the number to the end when using
+  array_index: int = 0 # Used to actually index the array
+  for i in range(start_idx, start_idx + NOVEL_DATA_ARRAY_SIZE):
+    # Create chapter name
+    curr_chapter_name: str = CHAPTER_NAME + str(i) + ".txt"
+
+    # Write to file
+    with open(output_directory + "/" + curr_chapter_name, "w", encoding="utf-8") as f:
+      f.write(translation_data[array_index])
+    
+    # Increment array index
+    array_index += 1
 
 # === Function: main ===
 async def main() -> None:
@@ -18,15 +92,20 @@ async def main() -> None:
   # Print some whitespace before starting
   print()
 
-  # Setup directory if not already
-  OUTPUT_DIRECTORY_ROOT: str = "translations/" # Directory that novels will be outputted to
+  # Setup translations directory, if not already done
   os.makedirs(OUTPUT_DIRECTORY_ROOT, exist_ok=True)
 
   running: bool = True # Is the application running
-  scraper: Scraper = Scraper()
-  translator: TextTranslator = TextTranslator()
 
   while running:
+    thread_count = "Uninitialized"
+    while not thread_count.isdigit() and thread_count != "":
+      thread_count = ""
+      thread_count = input("How many threads would you like to use? (Press Enter for '1'): ")
+    if thread_count == "":
+      thread_count = 1
+    thread_count = int(thread_count)
+
     scraper_settings_filename: str = "Uninitialized"
     while ".txt" not in scraper_settings_filename and scraper_settings_filename != "":
       scraper_settings_filename = ""
@@ -35,6 +114,7 @@ async def main() -> None:
       scraper_settings_filename = "booktoki.txt"
 
     # Get the novel URL
+    # TODO: pip install validators and check if the url is a valid url before proceeding
     novel_url: str = input("Enter the novel URL: ")
 
     # Get the starting chapter index
@@ -52,7 +132,7 @@ async def main() -> None:
       end_idx = ""
       end_idx = input("Enter the ending chapter(Press ENTER for the Latest Chapter): ")
     if end_idx == "":
-      end_idx = "2147000000"
+      end_idx = INT_MAX
     end_idx = int(end_idx)
       
     # Get the directory to save files to
@@ -64,64 +144,26 @@ async def main() -> None:
     start = input("Start scrape? (y/n): ")
     if (start == "y"):
       # Scrape the novel
+      # TODO: Implement a thread that will each do the specified range,
+      #       like Chapter 1-200 with 4 threads does (1-49), (50-99), (100-149), (150-200)
 
-      # Set the scraper settings
-      if (scraper_settings_filename != ""):
-        scraper.loadScraperSettings(scraper_settings_filename)
+      print(f"Running scraper with {thread_count} threads.")
 
-      # Initialize values in the scraper
-      scraper.setNovelChapterListUrl(novel_url)
+      # How many chapters should each thread do?
+      thread_ranges: list[tuple[int]] = splitRangeIntoChunks(start_idx, end_idx, thread_count)
 
-      # Initialize values in the translator
-      # TODO: MAKE THESE ACTUALLY CHANGEABLE
-      translator.setSourceLanguage(TextTranslator.Languages.KOREAN)
-      translator.setDestinationLanguage(TextTranslator.Languages.ENGLISH)
-
-      # Start the scrape
-      chapter_data: list[str] = scraper.scrape(start_idx=start_idx, end_idx=end_idx)
-      CHAPTER_DATA_SIZE: int = len(chapter_data)
-
-      # Log text formatting
-      print("Formatting text...")
-
-      # Fix chapter data if necessary
-      for i in range(CHAPTER_DATA_SIZE):
-        # Prevent erros
-        if (chapter_data[i] == None): continue
-
-        # Replace weird ellipses characters with actual periods
-        chapter_data[i] = chapter_data[i].replace('…', '...')
-
-        # Replace one newline with 2, for visual seperation
-        chapter_data[i] = chapter_data[i].replace("\n", "\n\n")
-
-      # Log text formatting complete
-      print("Text formatting complete!\n")
-
-      # Translate the data
-      translation_data: list[str] = translator.translateStringArray(chapter_data)
+      # Create threads
+      threads: list[threading.Thread] = [None] * thread_count
+      for i in range(thread_count):
+        threads[i] = threading.Thread(target=executeScrapeAndTranslate, args=(novel_url, scraper_settings_filename, thread_ranges[i][0], thread_ranges[i][1], output_directory))
       
-      # Error during translation
-      if (translation_data == None):
-        print("Could not translate the data. Please use a valid translation language.")
-        sys.exit(1)
-
-      # Create the directory to save to
-      os.makedirs(output_directory, exist_ok=False)
-
-      # Save the translated data to the disk
-      CHAPTER_NAME: str = "Chapter " # NOTE: Appends the number to the end when using
-      array_index: int = 0 # Used to actually index the array
-      for i in range(start_idx, end_idx + 1):
-        # Create chapter name
-        curr_chapter_name: str = CHAPTER_NAME + str(i) + ".txt"
-
-        # Write to file
-        with open(output_directory + "/" + curr_chapter_name, "w", encoding="utf-8") as f:
-          f.write(translation_data[array_index])
-        
-        # Increment array index
-        array_index += 1
+      # Start threads
+      for i in range(thread_count):
+        threads[i].start()
+      
+      # Join threads
+      for i in range(thread_count):
+        threads[i].join()
     
     continue_choice = input("Translate another novel? (y/n): ")
 

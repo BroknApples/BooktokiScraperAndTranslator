@@ -6,6 +6,90 @@ import os
 INT_MAX: int = sys.maxsize
 INT_MIN: int = -sys.maxsize - 1
 
+def splitRangeIntoChunks(start: int, end: int, chunk_count: int) -> list[tuple[int]]:
+  """
+  Given a start, end, and chunk_count, create a list that defines each range of numbers
+
+  Params:
+    start: Starting number
+    end: Ending number
+    chunk_count: How many ways should this range be split by
+
+  Returns:
+    list[tuple[int]]: Correct ranges for each block
+  """
+  
+  # Get the total size and the base chunk size (doesn't include the leftover odd digits)
+  total: int = end - start + 1
+  base_chunk: int = total // chunk_count
+  remainder: int = total % chunk_count
+
+  ranges: list[int] = [] * chunk_count
+  current_starting_num = start
+
+  for i in range(chunk_count):
+    # Add one if the the current index is lower than the amount of indexes that should get a remainder
+    chunk_size: int = base_chunk + (1 if i < remainder else 0)
+
+    # Set start and end values
+    start_val: int = current_starting_num
+    end_val = current_starting_num + chunk_size - 1
+
+    # Add values to the list as a tuple
+    ranges.append((start, end))
+
+    # Set new range's starting value
+    current_starting_num = end + 1
+
+  # Return properly created list
+  return ranges
+
+# === Function: createDirectory ===
+def createDirectory(directory_path: str, exist_ok: bool = True) -> bool:
+  """
+  Attempt to create a directory
+
+  Params:
+    directory_path: Path of the directory to create
+    exist_ok: The same as exist_ok in 'os.makedirs'
+
+  Returns:
+    bool: True/False of creation of the directory
+
+  Raises:
+    Exception if 'exist_ok' is False and the path is not valid/already exists
+  """
+
+  try:
+    os.makedirs(output_directory, exist_ok=exist_ok)
+
+    # If code reaches this point, no error in dir creation
+    return true
+  except Exception as e:
+    print("Invalid output directory name.")
+    return False
+
+# === Function: formatNovelText ===
+def formatNovelText(text: str) -> str:
+  """
+  Format a novel chapter's text to be more readable
+
+  Params:
+    text: Text to format
+  
+  Returns:
+    str: A formatted version of the original text
+  """
+
+  # Replace weird ellipses characters with actual periods
+  text = text.replace('…', '...')
+
+  # Replace one newline with 2, for visual seperation
+  text = text.replace("\n", "\n\n")
+
+  # Return formatted text
+  return text
+
 # === Function: getFileContentsByLine ===
 def getFileContentsByLine(filepath: str, remove_newlines: bool = True) -> list[str]:
   """

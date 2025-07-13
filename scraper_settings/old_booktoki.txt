@@ -2,8 +2,8 @@
 Booktoki
 
 [ChapterListReadChapterButtonHtmlData]
-tag="class name"
-element="list-body"
+tag="By.XPATH"
+element="//*[@data-index="{_VALUE_}"]"
 
 [NextChapterButtonHtmlData]
 tag="class name"
