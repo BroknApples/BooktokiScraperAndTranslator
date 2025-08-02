@@ -1,14 +1,21 @@
+"""
+
+NOTE: TEST TRANSLATION TEXT
+  translator = TextTranslator()
+  untranslated_text: str = "아카데미 에위장취업당했다-277화"
+  translated_text: str = translator.translateString(untranslated_text)
+  print("The translated text is: " + translated_text)
+
+"""
+
+
 # Imports
 import asyncio
 from deep_translator import GoogleTranslator
-from src.utils import printModuleSeparator
+from src.common.utils import printModuleSeparator
 
-# NOTE: TEST TRANSLATION TEXT:
-# translator = TextTranslator()
-# untranslated_text: str = "아카데미 에위장취업당했다-277화"
-# translated_text: str = translator.translateString(untranslated_text)
-# print("The translated text is: " + translated_text)
 
+# === Class: TextTranslator ===
 class TextTranslator():
   """
   A class that allows you to translate strings or an array of string to another language
@@ -19,14 +26,18 @@ class TextTranslator():
   # ****************** Private ***************** #
   # ******************************************** #
 
+
   # === Constants ===
   _CHUNK_SIZE: int = 1250 # How many characters can be in one string when calling googletranslate's translate function
+
 
   # === Variables ===
   _translator: GoogleTranslator = None
   _src_lang: str
   _dest_lang: str
 
+
+  # === Function: _translateStringInternal ===
   def _translateStringInternal(self, text: str) -> str:
     """
     Does the actual work of translating a string
@@ -55,6 +66,7 @@ class TextTranslator():
     # Return the translated string
     return "".join(translated_chunks)  
 
+
   # === Function: _translateInternal ===
   def _translateInternal(self, text: str) -> str:
     """
@@ -74,6 +86,7 @@ class TextTranslator():
 
     # Properly return the text property of the translation
     return translated_text
+
 
   # === Function: _chunkateString ===
   def _chunkateString(self, text: str) -> list:
@@ -102,6 +115,7 @@ class TextTranslator():
     
     return chunks
 
+
   # === Function: _initializeTranslator ===
   def _initializeTranslator(self) -> None:
     """
@@ -110,9 +124,11 @@ class TextTranslator():
     
     self._translator = GoogleTranslator(source=self.getSourceLanguage(), target=self.getDestinationLanguage())
 
+
   # ******************************************** #
   # ****************** Public ****************** #
   # ******************************************** #
+
 
   # === Subclass: Languages ===
   class Languages():
@@ -126,6 +142,7 @@ class TextTranslator():
     ENGLISH: str = "en"
     JAPANESE: str = "jp"
 
+
   # === Function: __init__ ===
   def __init__(self, src_lang: str = Languages.AUTO_DETECT, dest_lang: str= Languages.ENGLISH):
     """
@@ -138,6 +155,7 @@ class TextTranslator():
 
     self.setSourceLanguage(src_lang)
     self.setDestinationLanguage(dest_lang)
+
 
   # === Function: translateString ===
   def translateString(self, text: str, src_lang: str = None, dest_lang: str = None) -> str | None:
@@ -184,6 +202,7 @@ class TextTranslator():
     # Return a single string instead of the chunks
     return translated_text
     
+
   # === Function: translateStringArray ===
   def translateStringArray(self, text_array: list[str], src_lang: str = None, dest_lang: str = None) -> list[str] | None:
     """
@@ -245,6 +264,7 @@ class TextTranslator():
   # ************** Getters/Setters ************* #
   # ******************************************** #
 
+
   # === Function: setSourceLanguage ===
   def setSourceLanguage(self, value: str | None) -> None:
     """
@@ -257,6 +277,7 @@ class TextTranslator():
     if (value != None):
      self._src_lang = value
 
+
   # === Function: getSourceLanguage ===
   def getSourceLanguage(self) -> str:
     """
@@ -267,6 +288,7 @@ class TextTranslator():
     """
 
     return self._src_lang
+
 
   # === Function: setDestinationLanguage ===
   def setDestinationLanguage(self, value: str | None) -> None:
@@ -279,6 +301,7 @@ class TextTranslator():
 
     if (value != None):
       self._dest_lang = value
+
 
   # === Function: getDestinationLanguage ===
   def getDestinationLanguage(self) -> str:

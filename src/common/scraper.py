@@ -1,49 +1,55 @@
 # Imports
-import math
+import time
 import re
-import asyncio
+import configparser
 from enum import Enum
 from seleniumbase import Driver
 from selenium.webdriver.common.by import By
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
 from selenium.common.exceptions import NoSuchElementException, WebDriverException
-from src.utils import (
-  INT_MAX,
+from src.common.utils import (
+  Limits,
   printModuleSeparator,
   getFileContentsByLine,
   formatNovelText
 )
 
 
+# === Class: Scraper ===
 class Scraper():
   """
   A class that allows you to scrape chapter data from a booktoki novel page
   """
+
 
   # === Subclass: HtmlElementData ===
   class HtmlElementData():
     """
     Holds the 2 things needed call find_element() on the seleniumbase webdriver
     """
-    
-    tag = None # Type of element tag to search this element with | NOTE: Use HtmlElementTag.XXX
-    element: str = None # Actual element to find
 
-    class Tags():
+
+    # === Subclass: Bys ===
+    class Bys():
       """
       Holds constants for an html element's type
       """
 
       ID: str = "id"
       CLASS_NAME: str = "class name"
-      X_PATH = By.XPATH
-      X_PATH_STR: str = "By.XPATH" # Needed for string-matching to choose the correct tag type
+      X_PATH: str = "xpath"
+      CSS_SELECTOR: str = "css selector"
 
+
+    # === Subclass: Elements ===
     class Elements():
       """
       Holds constants/functions for generating HtmlElementData element names
       """
 
       FILL_VALUE: str = "{_VALUE_}"
+
 
       @staticmethod
       def fillElementWithValue(element: str, value: str) -> str:
@@ -66,38 +72,67 @@ class Scraper():
         
         # The fill value constant wasn't present, so we just return the original value
         return element
+
+
+    # === Constants ===
+    BY: str = "by"
+    ELEMENT: str = "element"
+    BY_MAP: dict = {
+      Bys.ID : By.ID,
+      Bys.CLASS_NAME : By.CLASS_NAME,
+      Bys.X_PATH : By.XPATH,
+      Bys.CSS_SELECTOR : By.CSS_SELECTOR
+    }
+
+
+    # === Variables ===
+    by = None # Type of element by to search this element with | NOTE: Use HtmlElement.Bys.XXX
+    element: str = None # Actual element to find
   
+
+    # === Function: applyByMap ===
+    def applyByMap(self) -> None:
+      """
+      Apply the by map to a HtmlElementData object
+      """
+
+      self.by = self.BY_MAP.get(self.by)
+
 
   # ******************************************** #
   # ****************** Private ***************** #
   # ******************************************** #
 
+
   # === Constants ===
   # TODO: I HATE THE NAMING OF THESE VARIABLES BUT I DONT KNOW HOW TO FIX IT WITHOUT MAKING THEM VERY VAGUE
-  _SCRAPER_SETTINGS_DIRECTORY_PATH: str = "scraper_settings"
-  _SCRAPER_SETTINGS_TITLE_HEADER_LINE: str = "[Title]"
-  _SCRAPER_SETTINGS_CHAPTER_LIST_READ_CHAPTER_BUTTON_HTMLDATA_HEADER_LINE: str = "[ChapterListReadChapterButtonHtmlData]"
-  _SCRAPER_SETTINGS_NEXT_CHAPTER_BUTTON_HTMLDATA_HEADER_LINE: str = "[NextChapterButtonHtmlData]"
-  _SCRAPER_SETTINGS_CHAPTER_TEXT_BODY_HTMLDATA_HEADER_LINE: str = "[ChapterTextBodyHtmlData]"
-  _SCRAPER_SETTINGS_HTMLDATA_TAG: str = "tag="
-  _SCRAPER_SETTINGS_HTMLDATA_ELEMENT: str = "element="
+  _SCRAPER_SETTINGS_DIRECTORY_PATH: str = "cfg/scraper_settings"
+  _SCRAPER_SETTINGS_CHAPTER_LIST_BODY_HTMLDATA_HEADER: str = "ChapterListBodyHtmlData"
+  _SCRAPER_SETTINGS_CHAPTER_LIST_ITEM_HTMLDATA_HEADER: str = "ChapterListItemHtmlData"
+  _SCRAPER_SETTINGS_NEXT_CHAPTER_BUTTON_HTMLDATA_HEADER: str = "NextChapterButtonHtmlData"
+  _SCRAPER_SETTINGS_CHAPTER_TEXT_BODY_HTMLDATA_HEADER: str = "ChapterTextBodyHtmlData"
 
   """ How long with nothing happening until the webpage attempts to reconnect """
   _RECONNECT_TIME: int = 6
 
+
   # === Variables ===
+  _wait = None
   _driver = None
   _novel_chapter_list_url: str = ""
 
-  # TODO: I HATE THE NAMING OF THESE VARIABLES BUT I DONT KNOW HOW TO FIX IT WITHOUT MAKING THEM VERY VAGUE
-  """ The HTML data when you are on the chapter list webpage that corresponds to obtaining the link to any given chapter """
-  _chapter_list_read_chapter_button_htmldata: HtmlElementData = HtmlElementData()
+  """ The HTML data when you are on the chapter list webpage that corresponds the list of chapters """
+  _chapter_list_body_htmldata: HtmlElementData = HtmlElementData()
+
+  """ The HTML data when you are on the chapter list webpage that corresponds to an actual item in the chapter list"""
+  _chapter_list_item_htmldata: HtmlElementData = HtmlElementData()
   
   """ The HTML data used to go to the next chapter when on the reading page for a chapter """
   _next_chapter_button_htmldata: HtmlElementData = HtmlElementData()
 
   """ The HTML data for the actual text of a chapter """
   _chapter_text_body_htmldata: HtmlElementData = HtmlElementData()
+
 
   # === Function: _getHrefFromHtmlElement ===
   def _getHrefFromHtmlElement(self, element) -> str | None:
@@ -122,6 +157,7 @@ class Scraper():
     else:
       return None
 
+
   # === Function: _getInitialChapterUrl ===
   def _getInitialChapterUrl(self, chapter_num: int) -> str | None:
     """
@@ -138,9 +174,6 @@ class Scraper():
     try:
       self._driver.uc_open_with_reconnect(self.getNovelChapterListUrl(), reconnect_time=self._RECONNECT_TIME)
       self._driver.uc_gui_click_captcha()
-      
-      # Get the params to be used in 'find_element'
-      data_params: Scraper.HtmlElementData = self.getChapterListReadChapterButtonHtmlData()
 
       # # Loop through each <li> element and print its data-index attribute and text
       # for i, li in enumerate(list_items):
@@ -148,41 +181,35 @@ class Scraper():
       #   text = li.text
       #   print(f"Item {i} - data-")
 
-      # If the data params includes a FILL_VALUE,
-      # fill that value with the starting chapter
-      if (self.HtmlElementData.Elements.FILL_VALUE in data_params.element):
-        data_params.element = Scraper.HtmlElementData.Elements.fillElementWithValue(data_params.element, chapter_num)
-
       try:
         # Get the target <ul> element on the chapter list page
-        ul_element = self._driver.find_element(data_params.tag, data_params.element)
-
-        #breakpoint()
+        list_body_params: Scraper.HtmlElementData = self.getChapterListBodyHtmlData()
+        ul_element = self._wait.until(EC.presence_of_element_located((list_body_params.by, list_body_params.element)))
 
         # Find all <li> elements inside that <ul>
-        # TODO: Have this be modifiable by the scraper settings doc.
-        list_items = ul_element.find_elements(By.CSS_SELECTOR, "li.list-item")
+        list_item_params: Scraper.HtmlElementData = self.getChapterListItemHtmlData()
+        list_items = ul_element.find_elements(list_item_params.by, list_item_params.element)
 
-        #breakpoint()
-
-        # Return the link OR 'None' if it doesn't exist | Get the Nth from the end chapter num
+        # Return the link OR 'None' if it doesn't exist | NOTE: Get the Nth from the end chapter num
+        # TODO: Get the ending chapter number by taking the size of the list_items array (only if it was assigned 'Limits.INT_MAX' ofc)
         return self._getHrefFromHtmlElement(list_items[-chapter_num])
 
       # Element not found
       except NoSuchElementException:
-        #breakpoint()
         print("No such element.")
         return None
 
       # Other error
       except Exception as e:
+        print(f"Error: [{e}]")
         return None
     
     # Web driver was closed
     except WebDriverException:
       print("Exited WebDriver early, returning None.")
       return None
-    
+
+
   # === Function: _findNextChapterUrl ===
   def _findNextChapterUrl(self) -> str | None:
     """
@@ -197,13 +224,12 @@ class Scraper():
 
     try:
       # Get the target element
-      target_element = self._driver.find_element(data_params.tag, data_params.element)
+      target_element = self._driver.find_element(data_params.by, data_params.element)
 
       # Return the link OR 'None' if it doesn't exist
       return self._getHrefFromHtmlElement(target_element)
     # Element not found
     except NoSuchElementException:
-      #breakpoint()
       print("No such element.")
       return None
 
@@ -211,6 +237,7 @@ class Scraper():
       # If there is no such element, print the error and return 'None'
       print(f"Error: {e}")
       return None
+
 
   # === Function: _scrapeChapter ===
   def _scrapeChapter(self, url: str) -> str | None:
@@ -233,14 +260,13 @@ class Scraper():
 
       try:
         # Get the target element
-        element = self._driver.find_element(data_params.tag, data_params.element)
+        element = self._driver.find_element(data_params.by, data_params.element)
       
         # Return the element's text if possible
         return element.text
 
       # Element not found
       except NoSuchElementException:
-        #breakpoint()
         print("No such element.")
         return None
 
@@ -250,67 +276,16 @@ class Scraper():
         print(f"Error: {e}")
         return None
     
-    
     # Web driver was closed
     except WebDriverException:
       print("Exited WebDriver early, returning None.")
       return None
-
-  # === Function: _fillHtmlElementData ===
-  def _fillHtmlElementData(self, html_element_data: HtmlElementData, lines: list[str]) -> HtmlElementData:
-    """
-    Fills the html element data from some data arrays
-
-    Params:
-      html_element_data: The HtmlElementData data structure you wihs to fill
-      lines: The data you wish to input into the structure
-
-    Returns:
-      HtmlElementData: The data-filled structure
-    """
-    
-    for line in lines:
-      LINE_LENGTH: int = len(line)
-
-      # line_type is what will be compared to find the actual data of the elemnt
-      line_type: str = ""
-      for ch in line:
-        # When a quotation mark (") is reached, then you know that is the start of the actual data, so break
-        if (ch == '"'): break
-        line_type += ch
-      
-      if (line_type == self._SCRAPER_SETTINGS_HTMLDATA_TAG):
-        # Start from index 5 to read the data, stop at LINE_LENGTH-1
-        value = line[5 : LINE_LENGTH-1]
-
-        # If value is "null", then no point in assigning it
-        if (value != "null"):
-          # Log tag assigning
-          print("tag -> " + value)
-
-          # Some tags have a special value that is represented by a string
-          if (value == self.HtmlElementData.Tags.X_PATH_STR):
-            value = self.HtmlElementData.Tags.X_PATH
-
-          html_element_data.tag = value
-      
-      elif (line_type == self._SCRAPER_SETTINGS_HTMLDATA_ELEMENT):
-        # Start from index 9 to read the data, stop at LINE_LENGTH-1
-        value = line[9 : LINE_LENGTH-1]
-
-        # If value is "null", then no point in assigning it
-        if (value != "null"):
-          # Log element assigning
-          print("element -> " + value)
-
-          html_element_data.element = value
-
-    return html_element_data
   
-  
+
   # ******************************************** #
   # ****************** Public ****************** #
   # ******************************************** #
+
 
   # === Function: __init__ ===
   def __init__(self, novel_url: str = "") -> None:
@@ -323,9 +298,10 @@ class Scraper():
 
     # Load the default settings
     # TODO: Eventually add some actual '_default_settings' variable that can be used to change the default sraper settings
-    self.loadScraperSettings("booktoki.txt")
+    self.loadScraperSettings("booktoki.ini")
 
     self.setNovelChapterListUrl(novel_url)
+
 
   # === Function: initializeWebDriver ===
   def initializeWebDriver(self) -> None:
@@ -334,7 +310,9 @@ class Scraper():
     """
 
     self._driver = Driver(uc=True, headless=False)
+    self._wait = WebDriverWait(self._driver, self._RECONNECT_TIME)
   
+
   # === Function: uninitializeWebDriver ===
   def uninitializeWebDriver(self) -> None:
     """
@@ -343,7 +321,9 @@ class Scraper():
     
     self._driver.close()
     self._driver = None
+    self._wait = None
   
+
   # === Function: loadScraperSettings ===
   def loadScraperSettings(self, filename: str, path_override: bool = False) -> None:
     """
@@ -357,6 +337,9 @@ class Scraper():
     # Print a module separator
     printModuleSeparator()
 
+    # Log filename
+    print(f'Loading Scraper Settings: "{filename}"\n')
+
     # Get full file path
     full_file_path: str = ""
     if (path_override):
@@ -366,67 +349,62 @@ class Scraper():
       # If false(default value), then the filename is just the name of the file that is in the expected location
       full_file_path += self._SCRAPER_SETTINGS_DIRECTORY_PATH + "/" + filename
 
-    print(f'Loading from file path: "{full_file_path}"')
-
     # Get the line data of the file
-    lines: list[str] = getFileContentsByLine(full_file_path)
-    LINE_COUNT: int = len(lines)
+    config = configparser.ConfigParser()
+    config.read(full_file_path)
 
-    # Check the contents of the file
-    i: int = 0
-    while (i < LINE_COUNT):
-      # This line is the title header line, so the next will be the title 
-      if (lines[i] == self._SCRAPER_SETTINGS_TITLE_HEADER_LINE):
-        i += 1
-        
-        # Log title
-        print(f'Loading Scraper Settings: "{lines[i]}"\n')
-      
-      # This line is the read chapter button header line, so the next two lines will contain the "tag" and "element" data
-      elif (lines[i] == self._SCRAPER_SETTINGS_CHAPTER_LIST_READ_CHAPTER_BUTTON_HTMLDATA_HEADER_LINE):
-        # Log chapter list read chapter button html element data
-        print(f'Loading Chapter List Read Chapter Button HTML Element Data:')
-        
-        # Go to tag element line
-        contents: list[str] = lines[i+1 : i+3]
-        self._fillHtmlElementData(self._chapter_list_read_chapter_button_htmldata, contents)
-        i += 2
+    # Get sections
+    chapter_list_body_section = config[Scraper._SCRAPER_SETTINGS_CHAPTER_LIST_BODY_HTMLDATA_HEADER]
+    chapter_list_item_section = config[Scraper._SCRAPER_SETTINGS_CHAPTER_LIST_ITEM_HTMLDATA_HEADER]
+    next_chapter_button_section = config[Scraper._SCRAPER_SETTINGS_NEXT_CHAPTER_BUTTON_HTMLDATA_HEADER]
+    text_body_section = config[Scraper._SCRAPER_SETTINGS_CHAPTER_TEXT_BODY_HTMLDATA_HEADER]
 
-        # Print empty line if not the last loop-through
-        if (i != LINE_COUNT-1):
-          print()
+    # List body
+    self._chapter_list_body_htmldata.by = chapter_list_body_section.get(Scraper.HtmlElementData.BY).strip('"')
+    self._chapter_list_body_htmldata.element = chapter_list_body_section.get(Scraper.HtmlElementData.ELEMENT).strip('"')
 
-      # This line is the next chapter button header line, so the next two lines will contain the "tag" and "element" data
-      elif (lines[i] == self._SCRAPER_SETTINGS_NEXT_CHAPTER_BUTTON_HTMLDATA_HEADER_LINE):
-        # Log next chapter buton html element data
-        print(f'Loading Next Chapter Button HTML Element Data:')
+    # List item
+    self._chapter_list_item_htmldata.by = chapter_list_item_section.get(Scraper.HtmlElementData.BY).strip('"')
+    self._chapter_list_item_htmldata.element = chapter_list_item_section.get(Scraper.HtmlElementData.ELEMENT).strip('"')
 
-        contents: list[str] = lines[i+1 : i+3]
-        self._fillHtmlElementData(self._next_chapter_button_htmldata, contents)
-        i += 2
+    # Next chapter button
+    self._next_chapter_button_htmldata.by = next_chapter_button_section.get(Scraper.HtmlElementData.BY).strip('"')
+    self._next_chapter_button_htmldata.element = next_chapter_button_section.get(Scraper.HtmlElementData.ELEMENT).strip('"')
 
-        # Print empty line if not the last loop-through
-        if (i != LINE_COUNT-1):
-          print()
-      
-      # This line is the chapter text body header line, so the next two lines will contain the "tag" and "element" data
-      elif (lines[i] == self._SCRAPER_SETTINGS_CHAPTER_TEXT_BODY_HTMLDATA_HEADER_LINE):
-        # Log chapter text body html element data
-        print(f'Loading Chapter Text Body HTML Element Data:')
-        
-        contents: list[str] = lines[i+1 : i+3]
-        self._fillHtmlElementData(self._chapter_text_body_htmldata, contents)
-        i += 2
+    # Text body
+    self._chapter_text_body_htmldata.by = text_body_section.get(Scraper.HtmlElementData.BY).strip('"')
+    self._chapter_text_body_htmldata.element = text_body_section.get(Scraper.HtmlElementData.ELEMENT).strip('"')
 
-        # Print empty line if not the last loop-through
-        if (i != LINE_COUNT-1):
-          print()
-
-      # Always increment by 1
-      i += 1
+    # Print results
+    print(f"[{Scraper._SCRAPER_SETTINGS_CHAPTER_LIST_BODY_HTMLDATA_HEADER}]: "
+          f'\n{Scraper.HtmlElementData.BY} = "{self._chapter_list_body_htmldata.by}"'
+          f'\n{Scraper.HtmlElementData.ELEMENT} = "{self._chapter_list_body_htmldata.element}"'
+           "\n")
     
+    print(f"[{Scraper._SCRAPER_SETTINGS_CHAPTER_LIST_ITEM_HTMLDATA_HEADER}]: "
+          f'\n{Scraper.HtmlElementData.BY} = "{self._chapter_list_item_htmldata.by}"'
+          f'\n{Scraper.HtmlElementData.ELEMENT} = "{self._chapter_list_item_htmldata.element}"'
+          "\n")
+    
+    print(f"[{Scraper._SCRAPER_SETTINGS_NEXT_CHAPTER_BUTTON_HTMLDATA_HEADER}]: "
+          f'\n{Scraper.HtmlElementData.BY} = "{self._next_chapter_button_htmldata.by}"'
+          f'\n{Scraper.HtmlElementData.ELEMENT} = "{self._next_chapter_button_htmldata.element}"'
+          "\n")
+    
+    print(f"[{Scraper._SCRAPER_SETTINGS_CHAPTER_TEXT_BODY_HTMLDATA_HEADER}]: "
+          f'\n{Scraper.HtmlElementData.BY} = "{self._chapter_text_body_htmldata.by}"'
+          f'\n{Scraper.HtmlElementData.ELEMENT} = "{self._chapter_text_body_htmldata.element}"'
+          "")
+    
+    # Apply the by map
+    self._chapter_list_body_htmldata.applyByMap()
+    self._chapter_list_item_htmldata.applyByMap()
+    self._next_chapter_button_htmldata.applyByMap()
+    self._chapter_text_body_htmldata.applyByMap()
+
     # Print a module separator
     printModuleSeparator()
+
 
   # === Function: saveScraperSettings ===
   def saveScraperSettings(self, filename: str) -> None:
@@ -441,8 +419,9 @@ class Scraper():
 
     # TODO: Implment -> Save the current element data in the file
 
+
   # === Function: scrape ===
-  def scrape(self, start_idx: int = 0, end_idx: int = INT_MAX, format_text: bool = True) -> list[str]:
+  def scrape(self, start_idx: int = 0, end_idx: int = Limits.INT_MAX, format_text: bool = True) -> list[str]:
     """
     Starts the scraping of a booktoki novel.
 
@@ -534,6 +513,7 @@ class Scraper():
   # ************** Getters/Setters ************* #
   # ******************************************** #
 
+
   # === Function: setNovelChapterListUrl ===
   def setNovelChapterListUrl(self, value: str) -> None:
     """
@@ -544,6 +524,7 @@ class Scraper():
     """
     self._novel_chapter_list_url = value
   
+
   # === Function: getNovelChapterListUrl ===
   def getNovelChapterListUrl(self) -> str:
     """
@@ -553,6 +534,7 @@ class Scraper():
       str: Url to the booktoki novel you wish to scrape
     """
     return self._novel_chapter_list_url
+
 
   # # === Function: setThreadCount ===
   # def setThreadCount(self, thread_count: int = None) -> None:
@@ -564,6 +546,7 @@ class Scraper():
   #   """
   #   self._thread_count = thread_count
 
+
   # # === Function: getThreadCount ===
   # def getThreadCount(self) -> int:
   #   """
@@ -574,42 +557,72 @@ class Scraper():
   #   """
   #   return self._thread_count
 
-  # === Function: setChapterListReadChapterButtonHtmlData ===
-  def setChapterListReadChapterButtonHtmlData(self, tag, element: str) -> None:
+
+  # === Function: setChapterListBodyHtmlData ===
+  def setChapterListBodyHtmlData(self, by, element: str) -> None:
     """
-    Set the HTML data that points to the read chapter button of an
+    Set the HTML data that points to the chapter list body's html data
 
     Params:
-      tag: The element type to search for
+      by: The element type to search for
       element: The element's name ('button.open-menu', 'db.cs-rm', etc.)
     """
 
-    self._chapter_list_read_chapter_button_htmldata.tag = tag
-    self._chapter_list_read_chapter_button_htmldata.element = element
+    self._chapter_list_body_htmldata.by = by
+    self._chapter_list_body_htmldata.element = element
 
-  # === Function: getChapterListReadChapterButtonHtmlData ===
-  def getChapterListReadChapterButtonHtmlData(self) -> HtmlElementData:
+
+  # === Function: getChapterListBodyHtmlData ===
+  def getChapterListBodyHtmlData(self) -> HtmlElementData:
     """
-    Get the HTML data that points to the read chapter button of an
+    Get the HTML data that points to a list body
 
     Returns:
-      HtmlElementData: Data structure that outlines the html element that corresponds to the 'chapter list read chapter button'
+      HtmlElementData: Data structure that outlines the html element that corresponds to the 'chapter list body'
     """
 
-    return self._chapter_list_read_chapter_button_htmldata
+    return self._chapter_list_body_htmldata
+  
+
+  # === Function: setChapterListItemHtmlData ===
+  def setChapterListItemHtmlData(self, by, element: str) -> None:
+    """
+    Set the HTML data that points to the chapter list item's html data
+
+    Params:
+      by: The element type to search for
+      element: The element's name ('button.open-menu', 'db.cs-rm', etc.)
+    """
+
+    self._chapter_list_item_htmldata.by = by
+    self._chapter_list_item_htmldata.element = element
+
+
+  # === Function: getChapterListItemHtmlData ===
+  def getChapterListItemHtmlData(self) -> HtmlElementData:
+    """
+    Get the HTML data that points to a list item
+
+    Returns:
+      HtmlElementData: Data structure that outlines the html element that corresponds to the 'chapter list item'
+    """
+
+    return self._chapter_list_item_htmldata
+
 
   # === Function: setNextChapterButtonHtmlData ===
-  def setNextChapterButtonHtmlData(self, tag, element: str) -> None:
+  def setNextChapterButtonHtmlData(self, by, element: str) -> None:
     """
     Set the HTML data that points to the next chapter button on a chapter page
 
     Params:
-      tag: The element type to search for
+      by: The element type to search for
       element: The element's name ('button.open-menu', 'db.cs-rm', etc.)
     """
 
-    self._next_chapter_button_htmldata.tag = tag
+    self._next_chapter_button_htmldata.by = by
     self._next_chapter_button_htmldata.element = element
+
 
   # === Function: getNextChapterButtonHtmlData ===
   def getNextChapterButtonHtmlData(self) -> HtmlElementData:
@@ -622,18 +635,20 @@ class Scraper():
 
     return self._next_chapter_button_htmldata
 
+
   # === Function: setChapterTextBodyHtmlData ===
-  def setChapterTextBodyHtmlData(self, tag, element: str) -> None:
+  def setChapterTextBodyHtmlData(self, by, element: str) -> None:
     """
     Set the HTML data that points to the text of an actual chapter
 
     Params:
-      tag: The element type to search for
+      by: The element type to search for
       element: The element's name ('button.open-menu', 'db.cs-rm', etc.)
     """
 
-    self._chapter_text_body_htmldata.tag = tag
+    self._chapter_text_body_htmldata.by = by
     self._chapter_text_body_htmldata.element = element
+
 
   # === Function: getChapterTextBodyHtmlData ===
   def getChapterTextBodyHtmlData(self) -> HtmlElementData:

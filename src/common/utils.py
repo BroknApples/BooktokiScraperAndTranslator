@@ -1,11 +1,50 @@
 # Imports
 import sys
 import os
+import configparser
 
-# === Constants ===
-INT_MAX: int = sys.maxsize
-INT_MIN: int = -sys.maxsize - 1
 
+# === Class: OperatingSystems ===
+class OperatingSystems():
+  """
+  Defines constants for different operating systems.
+  """
+  
+  # === Constants ===
+  WINDOWS: str = "win32"
+  LINUX: str = "linux"
+  MACOS: str = "darwin"
+
+
+# === Class: Limits ===
+class Limits():
+  """
+  Defines the maximum sizes of variable types in python, mainly numbers.
+  """
+  
+  # === Constants ===
+  INT_MAX: int = sys.maxsize
+  INT_MIN: int = -sys.maxsize - 1
+
+
+# NOTE: Commented out since it's kinda useless; this only saves 1 line of work.
+# # === Function: loadConfigFile ===
+# def loadConfigFile(filename: str) -> configparser.ConfigParser:
+#   """
+#   Read a config file into a ConfigParser object
+
+#   Params:
+#     filename: Name of the config file to read
+  
+#   Returns:
+#     configparser.ConfigParser: Object used for config file parsing
+#   """
+
+#   config = configparser.ConfigParser()
+#   return config.read(filename)
+
+
+# === Function: splitRangeIntoChunks ===
 def splitRangeIntoChunks(start: int, end: int, chunk_count: int) -> list[tuple[int]]:
   """
   Given a start, end, and chunk_count, create a list that defines each range of numbers
@@ -44,6 +83,7 @@ def splitRangeIntoChunks(start: int, end: int, chunk_count: int) -> list[tuple[i
   # Return properly created list
   return ranges
 
+
 # === Function: createDirectory ===
 def createDirectory(directory_path: str, exist_ok: bool = True) -> bool:
   """
@@ -61,13 +101,14 @@ def createDirectory(directory_path: str, exist_ok: bool = True) -> bool:
   """
 
   try:
-    os.makedirs(output_directory, exist_ok=exist_ok)
+    os.makedirs(directory_path, exist_ok=exist_ok)
 
     # If code reaches this point, no error in dir creation
-    return true
+    return True
   except Exception as e:
     print("Invalid output directory name.")
     return False
+
 
 # === Function: formatNovelText ===
 def formatNovelText(text: str) -> str:
@@ -89,6 +130,7 @@ def formatNovelText(text: str) -> str:
 
   # Return formatted text
   return text
+
 
 # === Function: getFileContentsByLine ===
 def getFileContentsByLine(filepath: str, remove_newlines: bool = True) -> list[str]:
@@ -123,6 +165,7 @@ def getFileContentsByLine(filepath: str, remove_newlines: bool = True) -> list[s
 
   return lines
 
+
 # === Function: printModuleSeparator ===
 def printModuleSeparator() -> None:
   """
@@ -130,6 +173,7 @@ def printModuleSeparator() -> None:
   """
 
   print("\n*********************************************************\n")
+
 
 # NOTE: This is how a docstring should look
 """

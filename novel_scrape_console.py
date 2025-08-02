@@ -1,19 +1,26 @@
+"""
+
+NOTE: TEST TRANSLATION NOVEL (Academy's Undercover Professor) lol
+  link = https://booktoki468.com/novel/6219?book=일반소설
+
+"""
+
+
 # Imports
 import asyncio
 import os
 import threading
-from src.scraper import Scraper
-from src.translator import TextTranslator
-from src.utils import (
-  INT_MAX,
+from src.common.scraper import Scraper
+from src.common.translator import TextTranslator
+from src.common.utils import (
+  Limits,
   createDirectory,
   splitRangeIntoChunks
 )
- 
-# NOTE: TEST TRANSLATION NOVEL (Academy's Undercover Professor) lol
-# https://booktoki468.com/novel/6219?book=일반소설
+
+
 # === Constants ===
-OUTPUT_DIRECTORY_ROOT: str = "translations/" # Directory that novels will be outputted to
+OUTPUT_DIRECTORY_ROOT: str = "translations" # Directory that novels will be outputted to
 
 # === Function: executeScrapeAndTranslate ===
 def executeScrapeAndTranslate(novel_url: str, scraper_settings_filename: str, start_idx: int, end_idx: int, output_directory: str) -> list[str]:
@@ -63,8 +70,9 @@ def executeScrapeAndTranslate(novel_url: str, scraper_settings_filename: str, st
 
     output_directory = ""
     while (output_directory == ""):
+      output_directory = ""
       output_directory = input("Enter a name for your output directory: ")
-    output_directory = OUTPUT_DIRECTORY_ROOT + output_directory
+    output_directory = OUTPUT_DIRECTORY_ROOT + "/" + output_directory
 
   # Save the translated data to the disk
   NOVEL_DATA_ARRAY_SIZE: int = len(translation_data)
@@ -98,20 +106,12 @@ async def main() -> None:
   running: bool = True # Is the application running
 
   while running:
-    thread_count = "Uninitialized"
-    while not thread_count.isdigit() and thread_count != "":
-      thread_count = ""
-      thread_count = input("How many threads would you like to use? (Press Enter for '1'): ")
-    if thread_count == "":
-      thread_count = 1
-    thread_count = int(thread_count)
-
     scraper_settings_filename: str = "Uninitialized"
     while ".txt" not in scraper_settings_filename and scraper_settings_filename != "":
       scraper_settings_filename = ""
       scraper_settings_filename = input("Enter the scraper settings filename (Press Enter for 'Booktoki'): ")
     if (scraper_settings_filename == ""):
-      scraper_settings_filename = "booktoki.txt"
+      scraper_settings_filename = "booktoki.ini"
 
     # Get the novel URL
     # TODO: pip install validators and check if the url is a valid url before proceeding
@@ -132,22 +132,20 @@ async def main() -> None:
       end_idx = ""
       end_idx = input("Enter the ending chapter(Press ENTER for the Latest Chapter): ")
     if end_idx == "":
-      end_idx = INT_MAX
+      end_idx = Limits.INT_MAX
     end_idx = int(end_idx)
       
     # Get the directory to save files to
     output_directory: str = ""
     while (output_directory == ""):
       output_directory = input("Enter a name for your output directory: ")
-    output_directory = OUTPUT_DIRECTORY_ROOT + output_directory
+    output_directory = OUTPUT_DIRECTORY_ROOT + "/" + output_directory
 
+    # Scrape the novel
     start = input("Start scrape? (y/n): ")
     if (start == "y"):
-      # Scrape the novel
-      # TODO: Implement a thread that will each do the specified range,
-      #       like Chapter 1-200 with 4 threads does (1-49), (50-99), (100-149), (150-200)
-
-      print(f"Running scraper with {thread_count} threads.")
+      # TODO: Fix the threading issues (can't safely create multiple browsers so only set threading for translation and writing to disk)
+      thread_count = 1
 
       # How many chapters should each thread do?
       thread_ranges: list[tuple[int]] = splitRangeIntoChunks(start_idx, end_idx, thread_count)
@@ -158,12 +156,12 @@ async def main() -> None:
         threads[i] = threading.Thread(target=executeScrapeAndTranslate, args=(novel_url, scraper_settings_filename, thread_ranges[i][0], thread_ranges[i][1], output_directory))
       
       # Start threads
-      for i in range(thread_count):
-        threads[i].start()
+      for t in threads:
+        t.start()
       
       # Join threads
-      for i in range(thread_count):
-        threads[i].join()
+      for t in threads:
+        t.join()
     
     continue_choice = input("Translate another novel? (y/n): ")
 
