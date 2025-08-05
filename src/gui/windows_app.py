@@ -15,6 +15,8 @@ from PySide6.QtWidgets import (
   QLabel,
   QLineEdit,
   QPushButton,
+  QComboBox,
+  QCheckBox,
   QSpacerItem,
   QSizePolicy,
 )
@@ -84,14 +86,50 @@ class NovelScrapeGuiWindow(QMainWindow):
   _format_text: bool = True
 
   """ Scraper Settings Params """
-  _chapter_list_body_by: str = ""
+  _chapter_list_body_by: any = None
   _chapter_list_body_element: str = ""
-  _chapter_list_item_by: str = ""
+  _chapter_list_item_by: any = None
   _chapter_list_item_element: str = ""
-  _next_chapter_button_by: str = ""
+  _next_chapter_button_by: any = None
   _next_chapter_button_element: str = ""
-  _chapter_text_body_by: str = ""
+  _chapter_text_body_by: any = None
   _chapter_text_body_element: str = ""
+
+  """ Widgets """
+  # ROW ONE | COL ONE
+  _chapter_list_body_by_combo_box_widget: QComboBox
+  _chapter_list_body_element_line_edit_widget: QLineEdit
+
+  # ROW ONE | COL TWO
+  _chapter_list_item_by_combo_box_widget: QComboBox
+  _chapter_list_item_element_line_edit_widget: QLineEdit
+
+  # ROW TWO | COL ONE
+  _next_chapter_button_by_combo_box_widget: QComboBox
+  _next_chapter_button_element_line_edit_widget: QLineEdit
+
+  # ROW TWO | COL TWO
+  _chapter_text_body_by_combo_box_widget: QComboBox
+  _chapter_text_body_element_line_edit_widget: QLineEdit
+  
+  # ROW THREE | COL ONE
+  _start_idx_line_edit_widget: QLineEdit
+  _end_idx_line_edit_widget: QLineEdit
+
+  # ROW THREE | COL ONE
+  _src_lang_combo_box_widget: QComboBox
+  _dest_lang_combo_box_widget: QComboBox
+
+  # ROW FOUR | COL ONE
+  _format_text_check_box_widget: QCheckBox
+  # TODO: Add more lil settings here.
+
+  # ROW FOUR | COL TWO
+  _thread_count_combo_box_widget: QComboBox
+
+  # START BUTTON AREA -- WIDGETS
+  _novel_name_line_edit_widget: QLineEdit
+
 
   # === Function: _setupToolbar ===
   def _setupToolbar(self) -> None:
@@ -114,13 +152,55 @@ class NovelScrapeGuiWindow(QMainWindow):
     left_toolbar.addAction(QAction("Option 2", self))
 
 
+  # === Function: _createQHBoxWidget ===
+  def _createQHBoxWidget(self, widgets: list) -> QWidget:
+    """
+    Given a list of widgets, create an HBox widget filled in the order they appear
+
+    Params:
+      widgets: list of widgets to add to a new QHboxWidget
+
+    Returns:
+      QWidget: A widget with an HBoxLayout filled with the widgets from the 'widgets' param
+    """
+
+    # Setup widget
+    hbox_widget = QWidget()
+    hbox_layout = QHBoxLayout(hbox_widget)
+
+    # Add child widgets
+    for widget in widgets:
+      hbox_layout.addWidget(widget)
+
+    return hbox_widget
+
+
   # === Function: _setupCentralWidget ===
   def _setupCentralWidget(self) -> None:
     """
     Setup the central widget that contains all the boxes for scraping/translating
     """
 
-    # Create widgets
+    #################################
+    ### Constants for readability ###
+    #################################
+
+    ROW_ONE: int = 0
+    ROW_TWO: int = 1
+    ROW_THREE: int = 2
+    ROW_FOUR: int = 3
+    ROW_FIVE: int = 4
+
+    COLUMN_ONE: int = 0
+    COLUMN_TWO: int = 1
+    COLUMN_THREE: int = 2
+    COLUMN_FOUR: int = 3
+    COLUMN_FIVE: int = 4
+
+    ##########################
+    ####  Create Widgets  ####
+    ##########################
+
     central_widget = QWidget()
     vbox_layout = QVBoxLayout(central_widget)
 
@@ -134,43 +214,154 @@ class NovelScrapeGuiWindow(QMainWindow):
     vbox_layout.addWidget(grid_widget)
     vbox_layout.addWidget(hbox_widget, alignment=Qt.AlignmentFlag.AlignBottom)
 
-    # Constants for readability
-    ROW_ONE: int = 0
-    ROW_TWO: int = 1
-    ROW_THREE: int = 2
-    ROW_FOUR: int = 3
+    # Set layout settings
+    vbox_layout.setStretch(0, 1)  # Let grid_widget expand
+    vbox_layout.setStretch(1, 0)  # Let hbox_widget take only what it needs
 
-    COLUMN_ONE: int = 0
-    COLOMN_TWO: int = 1
-    COLUMN_THREE: int = 2
-    COLUMN_FOUR: int = 3
+    #########################################
+    ### Add widgets to grid (row, column) ###
+    #########################################
 
-    # Add widgets to grid (row, column)
-    grid_layout.addWidget(QPushButton("Button 1"),  ROW_ONE,       COLUMN_ONE)
-    grid_layout.addWidget(QPushButton("Button 2"),  COLUMN_ONE,    COLOMN_TWO)
-    grid_layout.addWidget(QPushButton("Button 3"),  ROW_TWO,       COLUMN_ONE)
-    grid_layout.addWidget(QPushButton("Button 4"),  ROW_TWO,       COLOMN_TWO)
+    #########################
+    ### ROW ONE | COL ONE ###
+    #########################
 
-    # Setup start panel
+    # Setup widgets
+    self._chapter_list_body_by_combo_box_widget = QComboBox()
+    self._chapter_list_body_element_line_edit_widget = QLineEdit()
+    self._chapter_list_body_element_line_edit_widget.setPlaceholderText("Ex: 'ul.list-body'")
+
+    # Create hbox widget and add to grid layout
+    chapter_list_body_hbox = self._createQHBoxWidget([self._chapter_list_body_by_combo_box_widget, self._chapter_list_body_element_line_edit_widget])
+    chapter_list_body_hbox.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Maximum)
+    grid_layout.addWidget(chapter_list_body_hbox, ROW_ONE, COLUMN_ONE)
+    
+    #########################
+    ### ROW ONE | COL TWO ###
+    #########################
+
+    # Setup widgets
+    self._chapter_list_item_by_combo_box_widget = QComboBox()
+    self._chapter_list_item_element_line_edit_widget = QLineEdit()
+    self._chapter_list_item_element_line_edit_widget.setPlaceholderText("Ex: 'li.list-item'")
+
+    # Create hbox widget and add to grid layout
+    chapter_list_item_hbox = self._createQHBoxWidget([self._chapter_list_item_by_combo_box_widget, self._chapter_list_item_element_line_edit_widget])
+    chapter_list_item_hbox.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Maximum)
+    grid_layout.addWidget(chapter_list_item_hbox, ROW_ONE, COLUMN_TWO)
+
+    #########################
+    ### ROW TWO | COL ONE ###
+    #########################
+
+    # Setup widgets
+    self._next_chapter_button_by_combo_box_widget = QComboBox()
+    self._next_chapter_button_element_line_edit_widget = QLineEdit()
+    self._next_chapter_button_element_line_edit_widget.setPlaceholderText("Ex: 'btn-resource.btn-next.at-tip'")
+
+    # Create hbox widget and add to grid layout
+    next_chapter_button_hbox = self._createQHBoxWidget([self._next_chapter_button_by_combo_box_widget, self._next_chapter_button_element_line_edit_widget])
+    next_chapter_button_hbox.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Maximum)
+    grid_layout.addWidget(next_chapter_button_hbox, ROW_TWO, COLUMN_ONE)
+
+    #########################
+    ### ROW TWO | COL TWO ###
+    #########################
+
+    # Setup widgets
+    self._chapter_text_body_by_combo_box_widget = QComboBox()
+    self._chapter_text_body_element_line_edit_widget = QLineEdit()
+    self._chapter_text_body_element_line_edit_widget.setPlaceholderText("Ex: 'novel_content'")
+
+    # Create hbox widget and add to grid layout
+    chapter_text_body_hbox = self._createQHBoxWidget([self._chapter_text_body_by_combo_box_widget, self._chapter_text_body_element_line_edit_widget])
+    chapter_text_body_hbox.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Maximum)
+    grid_layout.addWidget(chapter_text_body_hbox, ROW_TWO, COLUMN_TWO)
+    
+    ###########################
+    ### ROW THREE | COL ONE ###
+    ###########################
+
+    # Setup widgets
+    self._start_idx_line_edit_widget = QLineEdit()
+    self._start_idx_line_edit_widget.setPlaceholderText("Ex: '1'")
+
+    self._end_idx_line_edit_widget = QLineEdit()
+    self._end_idx_line_edit_widget.setPlaceholderText("Ex: '100'")
+
+    # Create hbox widget and add to grid layout
+    start_end_idx_hbox = self._createQHBoxWidget([self._start_idx_line_edit_widget, self._end_idx_line_edit_widget])
+    start_end_idx_hbox.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Maximum)
+    grid_layout.addWidget(start_end_idx_hbox, ROW_THREE, COLUMN_ONE)
+
+    ###########################
+    ### ROW THREE | COL TWO ###
+    ###########################
+
+    # Setup widgets
+    self._src_lang_combo_box_widget = QComboBox()
+
+    self._dest_lang_combo_box_widget = QComboBox()
+
+    # Create hbox widget and add to grid layout
+    src_dest_lang_hbox = self._createQHBoxWidget([self._src_lang_combo_box_widget, self._dest_lang_combo_box_widget])
+    src_dest_lang_hbox.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Maximum)
+    grid_layout.addWidget(src_dest_lang_hbox, ROW_THREE, COLUMN_TWO)
+
+    ##########################
+    ### ROW FOUR | COL ONE ###
+    ##########################
+
+    # Setup widgets
+    format_text_label = QLabel("Format Text: ")
+    self._format_text_check_box_widget = QCheckBox()
+
+    # Create hbox widget and add to grid layout
+    primary_settings_hbox = self._createQHBoxWidget([format_text_label, self._format_text_check_box_widget])
+    primary_settings_hbox.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Maximum)
+    grid_layout.addWidget(primary_settings_hbox, ROW_FOUR, COLUMN_ONE)
+
+    ##########################
+    ### ROW FOUR | COL TWO ###
+    ##########################
+
+    # Setup widgets
+    thread_count_label = QLabel("Thread Count: ")
+    self._thread_count_combo_box_widget = QComboBox()
+
+    # Create hbox widget and add to grid layout
+    secondary_settings_hbox = self._createQHBoxWidget([thread_count_label, self._thread_count_combo_box_widget])
+    secondary_settings_hbox.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Maximum)
+    grid_layout.addWidget(secondary_settings_hbox, ROW_FOUR, COLUMN_TWO)
+
+    ####################################
+    ### START BUTTON AREA -- WIDGETS ###
+    ####################################
+
+    # Setup start panel itself
+    hbox_widget.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Maximum)
     hbox_layout.setAlignment(Qt.AlignmentFlag.AlignRight)
 
-    # Create start panel widgets
+    # Create/setup start panel widgets
     start_button = QPushButton("Start")
     novel_name_label = QLabel("Novel Name: ")
-    novel_name_line_edit = QLineEdit(self._novel_name)
+    self._novel_name_line_edit_widget = QLineEdit()
+    self._novel_name_line_edit_widget.setPlaceholderText("Ex: 'My Web Novel'")
 
     # Add wigets to the start panel
     hbox_layout.addWidget(novel_name_label, alignment=Qt.AlignmentFlag.AlignLeft)
-    hbox_layout.addWidget(novel_name_line_edit, stretch=3)
+    hbox_layout.addWidget(self._novel_name_line_edit_widget, stretch=3)
     hbox_layout.addSpacerItem(QSpacerItem(self.width() // 3, 0, QSizePolicy.Expanding, QSizePolicy.Minimum))
     hbox_layout.addWidget(start_button, stretch=2)
 
+    # Set this as the central widget of the window
     self.setCentralWidget(central_widget)
-
+  
 
   # ******************************************** #
   # ****************** Public ****************** #
   # ******************************************** #
+
 
   # === Function: __init__ ===
   def __init__(self, config: configparser.ConfigParser) -> None:
@@ -205,15 +396,93 @@ class NovelScrapeGuiWindow(QMainWindow):
     self._setupToolbar()
     self._setupCentralWidget()
 
+
   # ******************************************** #
   # ************** Signal Functions ************ #
   # ******************************************** #
 
+
+  # === Function: _on_start_pressed ===
   def _on_start_pressed(self) -> None:
     """
     Called when the start button is called
     """
+
+    # TODO: Enter settings set into the scraper
+
     self._scraper.scrape(self._start_idx, self._end_idx, self._format_text)
+  
+
+  # === Function: _on_novel_link_changed ===
+  def _on_novel_link_changed(self) -> None:
+    """
+    Function that is triggered when the novel link line-edit is changed
+    """
+
+    pass
+  
+
+  # === Function: _on_start_index_changed ===
+  def _on_start_index_changed(self) -> None:
+    """
+    Function that is triggered when the start index line-edit is changed
+    """
+
+    pass
+  
+
+  # === Function: _on_end_index_changed ===
+  def _on_end_index_changed(self) -> None:
+    """
+    Function that is triggered when the end index line-edit is changed
+    """
+
+    pass
+  
+
+  # === Function: _on_translation_thread_count_changed ===
+  def _on_translation_thread_count_changed(self) -> None:
+    """
+    Function that is triggered when the thread count for translation is changed
+    """
+
+    pass
+  
+
+  # === Function: _on_chapter_list_body_element_changed ===
+  def _on_chapter_list_body_element_changed(self) -> None:
+    """
+    Function that is triggered when the chapter list body's "element" line-edit is changed
+    """
+
+    pass
+
+
+  # === Function: _on_chapter_list_item_element_changed ===
+  def _on_chapter_list_item_element_changed(self) -> None:
+    """
+    Function that is triggered when the chapter list item's "element" line-edit is changed
+    """
+
+    pass
+
+
+  # === Function: _on_next_chapter_button_element_changed ===
+  def _on_next_chapter_button_element_changed(self) -> None:
+    """
+    Function that is triggered when the next chapter button's "element" line-edit is changed
+    """
+
+    pass
+  
+
+  # === Function: _on_chapter_text_body_element_changed ===
+  def _on_chapter_text_body_element_changed(self) -> None:
+    """
+    Function that is triggered when the chapter text body's "element" line-edit is changed
+    """
+
+    pass
 
 
 
