@@ -1,5 +1,6 @@
 # Imports
 import sys
+import os
 import configparser
 from PySide6.QtCore import (
   Qt,
@@ -23,8 +24,12 @@ from PySide6.QtWidgets import (
 from PySide6.QtGui import (
   QAction,
   QIcon,
+  QIntValidator,
 )
-from src.common.utils import Limits
+from src.common.utils import (
+  Limits,
+  filterKeysFromSet,
+)
 from src.common.scraper import Scraper
 from src.common.translator import TextTranslator
 
@@ -64,6 +69,10 @@ class NovelScrapeGuiWindow(QMainWindow):
     TRANSLATOR_SETTINGS_SECTION: str = "TranslatorSettings"
     DEFAULT_SRC_LANGUAGE: str = "default_src_language"
     DEFAULT_DEST_LANGUAGE: str = "default_dest_language"
+    TRANSLATION_THREADS: str = "translation_threads"
+
+    GENERAL_SECTION: str = "General"
+    NOVEL_SAVE_DIRECTORY: str = "novel_save_directory"
 
 
   # ******************************************** #
@@ -153,26 +162,26 @@ class NovelScrapeGuiWindow(QMainWindow):
 
 
   # === Function: _createQHBoxWidget ===
-  def _createQHBoxWidget(self, widgets: list) -> QWidget:
+  def _createQBoxWidget(self, widgets: list[list], BoxLayout) -> QWidget:
     """
     Given a list of widgets, create an HBox widget filled in the order they appear
 
     Params:
-      widgets: list of widgets to add to a new QHboxWidget
+      widgets: list of widgets to add to a new 'QHBoxLayout' or 'QVBoxLayout' ||| NOTE: Format = [[widget, stretch], [widget, stretch], ...]
 
     Returns:
       QWidget: A widget with an HBoxLayout filled with the widgets from the 'widgets' param
     """
 
     # Setup widget
-    hbox_widget = QWidget()
-    hbox_layout = QHBoxLayout(hbox_widget)
+    box_widget = QWidget()
+    box_layout = BoxLayout(box_widget)
 
     # Add child widgets
-    for widget in widgets:
-      hbox_layout.addWidget(widget)
+    for pair in widgets:
+      box_layout.addWidget(pair[0], stretch=pair[1])
 
-    return hbox_widget
+    return box_widget
 
 
   # === Function: _setupCentralWidget ===
@@ -222,17 +231,36 @@ class NovelScrapeGuiWindow(QMainWindow):
     ### Add widgets to grid (row, column) ###
     #########################################
 
+    # Pre-setup tasks
+    # 1. Get the HTML element 'By' options
+    # 2. Get the Language options
+
+    HTML_ELEMENT_BY_OPTIONS_DICTIONARY = {
+      "Class Name"      : Scraper.HtmlElementData.Bys.CLASS_NAME,
+      "CSS Selector"    : Scraper.HtmlElementData.Bys.CSS_SELECTOR,
+      "ID"              : Scraper.HtmlElementData.Bys.ID,
+      "X-PATH"          : Scraper.HtmlElementData.Bys.X_PATH
+    }
+
+    LANGUAGE_OPTIONS_DICTIONARY = {
+      "Auto Detect"   : TextTranslator.Languages.AUTO_DETECT,
+      "English"       : TextTranslator.Languages.ENGLISH,
+      "Korean"        : TextTranslator.Languages.KOREAN,
+      "Japanese"      : TextTranslator.Languages.JAPANESE
+    }
+
     #########################
     ### ROW ONE | COL ONE ###
     #########################
 
     # Setup widgets
     self._chapter_list_body_by_combo_box_widget = QComboBox()
+    self._chapter_list_body_by_combo_box_widget.addItems(HTML_ELEMENT_BY_OPTIONS_DICTIONARY.keys())
     self._chapter_list_body_element_line_edit_widget = QLineEdit()
     self._chapter_list_body_element_line_edit_widget.setPlaceholderText("Ex: 'ul.list-body'")
 
     # Create hbox widget and add to grid layout
-    chapter_list_body_hbox = self._createQHBoxWidget([self._chapter_list_body_by_combo_box_widget, self._chapter_list_body_element_line_edit_widget])
+    chapter_list_body_hbox = self._createQBoxWidget([[self._chapter_list_body_by_combo_box_widget, 1], [self._chapter_list_body_element_line_edit_widget, 1]], QHBoxLayout)
     chapter_list_body_hbox.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Maximum)
     grid_layout.addWidget(chapter_list_body_hbox, ROW_ONE, COLUMN_ONE)
     
@@ -242,11 +270,12 @@ class NovelScrapeGuiWindow(QMainWindow):
 
     # Setup widgets
     self._chapter_list_item_by_combo_box_widget = QComboBox()
+    self._chapter_list_item_by_combo_box_widget.addItems(HTML_ELEMENT_BY_OPTIONS_DICTIONARY.keys())
     self._chapter_list_item_element_line_edit_widget = QLineEdit()
     self._chapter_list_item_element_line_edit_widget.setPlaceholderText("Ex: 'li.list-item'")
 
     # Create hbox widget and add to grid layout
-    chapter_list_item_hbox = self._createQHBoxWidget([self._chapter_list_item_by_combo_box_widget, self._chapter_list_item_element_line_edit_widget])
+    chapter_list_item_hbox = self._createQBoxWidget([[self._chapter_list_item_by_combo_box_widget, 1], [self._chapter_list_item_element_line_edit_widget, 1]], QHBoxLayout)
     chapter_list_item_hbox.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Maximum)
     grid_layout.addWidget(chapter_list_item_hbox, ROW_ONE, COLUMN_TWO)
 
@@ -256,11 +285,12 @@ class NovelScrapeGuiWindow(QMainWindow):
 
     # Setup widgets
     self._next_chapter_button_by_combo_box_widget = QComboBox()
+    self._next_chapter_button_by_combo_box_widget.addItems(HTML_ELEMENT_BY_OPTIONS_DICTIONARY.keys())
     self._next_chapter_button_element_line_edit_widget = QLineEdit()
     self._next_chapter_button_element_line_edit_widget.setPlaceholderText("Ex: 'btn-resource.btn-next.at-tip'")
 
     # Create hbox widget and add to grid layout
-    next_chapter_button_hbox = self._createQHBoxWidget([self._next_chapter_button_by_combo_box_widget, self._next_chapter_button_element_line_edit_widget])
+    next_chapter_button_hbox = self._createQBoxWidget([[self._next_chapter_button_by_combo_box_widget, 1], [self._next_chapter_button_element_line_edit_widget, 1]], QHBoxLayout)
     next_chapter_button_hbox.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Maximum)
     grid_layout.addWidget(next_chapter_button_hbox, ROW_TWO, COLUMN_ONE)
 
@@ -270,11 +300,12 @@ class NovelScrapeGuiWindow(QMainWindow):
 
     # Setup widgets
     self._chapter_text_body_by_combo_box_widget = QComboBox()
+    self._chapter_text_body_by_combo_box_widget.addItems(HTML_ELEMENT_BY_OPTIONS_DICTIONARY.keys())
     self._chapter_text_body_element_line_edit_widget = QLineEdit()
     self._chapter_text_body_element_line_edit_widget.setPlaceholderText("Ex: 'novel_content'")
 
     # Create hbox widget and add to grid layout
-    chapter_text_body_hbox = self._createQHBoxWidget([self._chapter_text_body_by_combo_box_widget, self._chapter_text_body_element_line_edit_widget])
+    chapter_text_body_hbox = self._createQBoxWidget([[self._chapter_text_body_by_combo_box_widget, 1], [self._chapter_text_body_element_line_edit_widget, 1]], QHBoxLayout)
     chapter_text_body_hbox.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Maximum)
     grid_layout.addWidget(chapter_text_body_hbox, ROW_TWO, COLUMN_TWO)
     
@@ -283,30 +314,61 @@ class NovelScrapeGuiWindow(QMainWindow):
     ###########################
 
     # Setup widgets
+
+    # Start index hbox
+    start_idx_label = QLabel("Starting Chapter: ")
+    #start_idx_label.setAlignment(Qt.AlignmentFlag.AlignRight)
     self._start_idx_line_edit_widget = QLineEdit()
     self._start_idx_line_edit_widget.setPlaceholderText("Ex: '1'")
+    self._start_idx_line_edit_widget.setValidator(QIntValidator())
 
+    start_idx_hbox = self._createQBoxWidget([[start_idx_label, 2], [self._start_idx_line_edit_widget, 3]], QHBoxLayout)
+    start_idx_hbox.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Maximum)
+
+    # End index hbox
+    end_idx_label = QLabel("Ending Chapter:   ")
+    #end_idx_label.setAlignment(Qt.AlignmentFlag.AlignRight)
     self._end_idx_line_edit_widget = QLineEdit()
     self._end_idx_line_edit_widget.setPlaceholderText("Ex: '100'")
+    self._end_idx_line_edit_widget.setValidator(QIntValidator())
+
+    end_idx_hbox = self._createQBoxWidget([[end_idx_label, 2], [self._end_idx_line_edit_widget, 3]], QHBoxLayout)
+    end_idx_hbox.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Maximum)
 
     # Create hbox widget and add to grid layout
-    start_end_idx_hbox = self._createQHBoxWidget([self._start_idx_line_edit_widget, self._end_idx_line_edit_widget])
-    start_end_idx_hbox.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Maximum)
-    grid_layout.addWidget(start_end_idx_hbox, ROW_THREE, COLUMN_ONE)
+    start_end_idx_vbox = self._createQBoxWidget([[start_idx_hbox, 0], [end_idx_hbox, 0]], QVBoxLayout)
+    start_end_idx_vbox.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Maximum)
+    grid_layout.addWidget(start_end_idx_vbox, ROW_THREE, COLUMN_ONE)
 
     ###########################
     ### ROW THREE | COL TWO ###
     ###########################
 
     # Setup widgets
+
+    # Src lang hbox & its widgets
+    src_lang_label = QLabel("Source Language:       ")
+    #src_lang_label.setAlignment(Qt.AlignmentFlag.AlignRight)
     self._src_lang_combo_box_widget = QComboBox()
+    self._src_lang_combo_box_widget.addItems(LANGUAGE_OPTIONS_DICTIONARY.keys())
 
+
+    src_lang_hbox = self._createQBoxWidget([[src_lang_label, 2], [self._src_lang_combo_box_widget, 3]], QHBoxLayout)
+    src_lang_hbox.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Maximum)
+
+    # Dest lang hbox & its widgets
+    dest_lang_label = QLabel("Destination Language: ")
+    #dest_lang_label.setAlignment(Qt.AlignmentFlag.AlignRight)
     self._dest_lang_combo_box_widget = QComboBox()
+    self._dest_lang_combo_box_widget.addItems(filterKeysFromSet(LANGUAGE_OPTIONS_DICTIONARY.keys(), ("Auto Detect") ))# NOTE: Remove the auto detect option since its the DESTINATION language
 
-    # Create hbox widget and add to grid layout
-    src_dest_lang_hbox = self._createQHBoxWidget([self._src_lang_combo_box_widget, self._dest_lang_combo_box_widget])
-    src_dest_lang_hbox.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Maximum)
-    grid_layout.addWidget(src_dest_lang_hbox, ROW_THREE, COLUMN_TWO)
+    dest_lang_hbox = self._createQBoxWidget([[dest_lang_label, 2], [self._dest_lang_combo_box_widget, 3]], QHBoxLayout)
+    dest_lang_hbox.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Maximum)
+
+    # Create vbox container widget and add to grid layout
+    src_dest_lang_vbox = self._createQBoxWidget([[src_lang_hbox, 0], [dest_lang_hbox, 0]], QVBoxLayout)
+    src_dest_lang_vbox.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Maximum)
+    grid_layout.addWidget(src_dest_lang_vbox, ROW_THREE, COLUMN_TWO)
 
     ##########################
     ### ROW FOUR | COL ONE ###
@@ -317,7 +379,7 @@ class NovelScrapeGuiWindow(QMainWindow):
     self._format_text_check_box_widget = QCheckBox()
 
     # Create hbox widget and add to grid layout
-    primary_settings_hbox = self._createQHBoxWidget([format_text_label, self._format_text_check_box_widget])
+    primary_settings_hbox = self._createQBoxWidget([[format_text_label, 0], [self._format_text_check_box_widget, 1]], QHBoxLayout)
     primary_settings_hbox.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Maximum)
     grid_layout.addWidget(primary_settings_hbox, ROW_FOUR, COLUMN_ONE)
 
@@ -327,10 +389,17 @@ class NovelScrapeGuiWindow(QMainWindow):
 
     # Setup widgets
     thread_count_label = QLabel("Thread Count: ")
+
+    # Get the total allowable threads of the current hardware.
+    maximum_thread_count = os.cpu_count()
     self._thread_count_combo_box_widget = QComboBox()
+    for i in range(1, maximum_thread_count + 1):
+      self._thread_count_combo_box_widget.addItem(str(i))
+    # TODO: Set the initial value to the one saved in the config.ini
+
 
     # Create hbox widget and add to grid layout
-    secondary_settings_hbox = self._createQHBoxWidget([thread_count_label, self._thread_count_combo_box_widget])
+    secondary_settings_hbox = self._createQBoxWidget([[thread_count_label, 0], [self._thread_count_combo_box_widget, 0]], QHBoxLayout)
     secondary_settings_hbox.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Maximum)
     grid_layout.addWidget(secondary_settings_hbox, ROW_FOUR, COLUMN_TWO)
 

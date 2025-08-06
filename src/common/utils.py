@@ -166,6 +166,18 @@ def getFileContentsByLine(filepath: str, remove_newlines: bool = True) -> list[s
   return lines
 
 
+# === Function: filerKeysFromSet ===
+def filterKeysFromSet(set, exclude_list: list) -> list:
+  """
+  Given some set of values, remove values that are in the exclude_list
+
+  Params:
+    set: Set to get a filtered set from
+    exclude_list: List of values to exclude
+  """
+
+  return [v for v in set if v not in exclude_list]
+
 # === Function: printModuleSeparator ===
 def printModuleSeparator() -> None:
   """
