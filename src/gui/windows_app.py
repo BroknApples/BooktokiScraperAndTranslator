@@ -255,6 +255,7 @@ class NovelScrapeGuiWindow(QMainWindow):
 
     # Setup widgets
     self._chapter_list_body_by_combo_box_widget = QComboBox()
+    #self._chapter_list_body_by_combo_box_widget.lineEdit().setAlignment(Qt.AlignmentFlag.AlignCenter) # Align text to center
     self._chapter_list_body_by_combo_box_widget.addItems(HTML_ELEMENT_BY_OPTIONS_DICTIONARY.keys())
     self._chapter_list_body_element_line_edit_widget = QLineEdit()
     self._chapter_list_body_element_line_edit_widget.setPlaceholderText("Ex: 'ul.list-body'")
@@ -270,6 +271,7 @@ class NovelScrapeGuiWindow(QMainWindow):
 
     # Setup widgets
     self._chapter_list_item_by_combo_box_widget = QComboBox()
+    #self._chapter_list_item_by_combo_box_widget.lineEdit().setAlignment(Qt.AlignmentFlag.AlignCenter) # Align text to center
     self._chapter_list_item_by_combo_box_widget.addItems(HTML_ELEMENT_BY_OPTIONS_DICTIONARY.keys())
     self._chapter_list_item_element_line_edit_widget = QLineEdit()
     self._chapter_list_item_element_line_edit_widget.setPlaceholderText("Ex: 'li.list-item'")
@@ -285,6 +287,7 @@ class NovelScrapeGuiWindow(QMainWindow):
 
     # Setup widgets
     self._next_chapter_button_by_combo_box_widget = QComboBox()
+    #self._next_chapter_button_by_combo_box_widget.lineEdit().setAlignment(Qt.AlignmentFlag.AlignCenter) # Align text to center
     self._next_chapter_button_by_combo_box_widget.addItems(HTML_ELEMENT_BY_OPTIONS_DICTIONARY.keys())
     self._next_chapter_button_element_line_edit_widget = QLineEdit()
     self._next_chapter_button_element_line_edit_widget.setPlaceholderText("Ex: 'btn-resource.btn-next.at-tip'")
@@ -300,6 +303,7 @@ class NovelScrapeGuiWindow(QMainWindow):
 
     # Setup widgets
     self._chapter_text_body_by_combo_box_widget = QComboBox()
+    #self._chapter_text_body_by_combo_box_widget.lineEdit().setAlignment(Qt.AlignmentFlag.AlignCenter) # Align text to center
     self._chapter_text_body_by_combo_box_widget.addItems(HTML_ELEMENT_BY_OPTIONS_DICTIONARY.keys())
     self._chapter_text_body_element_line_edit_widget = QLineEdit()
     self._chapter_text_body_element_line_edit_widget.setPlaceholderText("Ex: 'novel_content'")
@@ -350,6 +354,7 @@ class NovelScrapeGuiWindow(QMainWindow):
     src_lang_label = QLabel("Source Language:       ")
     #src_lang_label.setAlignment(Qt.AlignmentFlag.AlignRight)
     self._src_lang_combo_box_widget = QComboBox()
+    #self._src_lang_combo_box_widget.lineEdit().setAlignment(Qt.AlignmentFlag.AlignCenter) # Align text to center
     self._src_lang_combo_box_widget.addItems(LANGUAGE_OPTIONS_DICTIONARY.keys())
 
 
@@ -360,6 +365,7 @@ class NovelScrapeGuiWindow(QMainWindow):
     dest_lang_label = QLabel("Destination Language: ")
     #dest_lang_label.setAlignment(Qt.AlignmentFlag.AlignRight)
     self._dest_lang_combo_box_widget = QComboBox()
+    #self._dest_lang_combo_box_widget.lineEdit().setAlignment(Qt.AlignmentFlag.AlignCenter) # Align text to center
     self._dest_lang_combo_box_widget.addItems(filterKeysFromSet(LANGUAGE_OPTIONS_DICTIONARY.keys(), ("Auto Detect") ))# NOTE: Remove the auto detect option since its the DESTINATION language
 
     dest_lang_hbox = self._createQBoxWidget([[dest_lang_label, 2], [self._dest_lang_combo_box_widget, 3]], QHBoxLayout)
@@ -393,6 +399,7 @@ class NovelScrapeGuiWindow(QMainWindow):
     # Get the total allowable threads of the current hardware.
     maximum_thread_count = os.cpu_count()
     self._thread_count_combo_box_widget = QComboBox()
+    #self._thread_count_combo_box_widget.lineEdit().setAlignment(Qt.AlignmentFlag.AlignCenter) # Align text to center
     for i in range(1, maximum_thread_count + 1):
       self._thread_count_combo_box_widget.addItem(str(i))
     # TODO: Set the initial value to the one saved in the config.ini
